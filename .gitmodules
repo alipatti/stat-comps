@@ -1,3 +1,0 @@
-[submodule ".data/wyscout"]
-	path = .data/wyscout
-	url = https://github.com/koenvo/wyscout-soccer-match-event-dataset

@@ -1,2 +1,15 @@
-.venv
+# mac file system BS
 .DS_Store
+
+# python cache
+__pycache__/
+.venv
+
+# quarto cache/output directory
+/.quarto/
+output
+
+# latex junk
+*.aux
+*.log
+*.tex

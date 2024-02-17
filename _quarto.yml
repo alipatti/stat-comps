@@ -1,0 +1,25 @@
+project:
+  title: Alistair Pattison's Statistics Comps (Winter 2024)
+  output-dir: output
+  render:
+    - checkin/
+    - paper/
+    - slides/
+  preview:
+    browser: false
+
+author: Alistair Pattison
+date-format: long
+bibliography: references.bib
+cite-method: biblatex
+biblatexoptions:
+  - style=alphabetic
+
+format:
+  pdf:
+    pdf-engine: pdflatex
+    header-includes: |
+      \usepackage{ali-macros}
+    number-sections: true
+    latex-clean: false
+    keep-tex: true

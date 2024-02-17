@@ -1,0 +1,41 @@
+---
+title: Stats Comps
+subtitle: (I'll come up with a better title before the real talk)
+format: beamer
+---
+
+## Introduction
+
+![](liverpool.png)
+
+[on this slide I'll talk about how this match was tied 0-0 at halftime, liverpool ended up winning 4-0. anyone watching the game could have told you that liverpool was almost certainly going to win]
+
+## Outline
+
+- What is statistics anyway?
+  - Linear regression
+  - Non-parametric models
+  - Interpretability v. flexibility
+
+- Neural networks
+  - What are they?
+  - Recurrent neural nets
+
+- Predicting basketball and soccer games
+  - Motivation
+  - Encoding the data
+  - The model
+
+- Interpretation
+  - How does this help us better understand the sport?
+
+# Backing up
+
+## Stats 101
+
+- What are the goals of statistics?
+- Estimating some function $f : X \to Y$
+  - Sometimes we make assumptions about $f$, e.g. linear regression
+- Simpler models lead to easier interpretation
+- But sometimes they don't work well, e.g., when number of samples or number of variables is very large.
+

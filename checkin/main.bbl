@@ -1,0 +1,204 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{anyt/global//global/global}
+    \entry{TimeSHAP}{inproceedings}{}
+      \name{author}{5}{}{%
+        {{hash=61e48e7fe0c3d679b4e8464df9f28e03}{%
+           family={Bento},
+           familyi={B\bibinitperiod},
+           given={João},
+           giveni={J\bibinitperiod}}}%
+        {{hash=68081e126ddfa7441fa43e8aa0806a37}{%
+           family={Saleiro},
+           familyi={S\bibinitperiod},
+           given={Pedro},
+           giveni={P\bibinitperiod}}}%
+        {{hash=c9f7e76fc9f06b696d85b5617d13ded6}{%
+           family={Cruz},
+           familyi={C\bibinitperiod},
+           given={André\bibnamedelima F.},
+           giveni={A\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
+        {{hash=aa2473b9683397d4b0aa3285bb9b0bef}{%
+           family={Figueiredo},
+           familyi={F\bibinitperiod},
+           given={Mário\bibnamedelima A.T.},
+           giveni={M\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=bdd97e256068b8195d6f4a91e2d4b241}{%
+           family={Bizarro},
+           familyi={B\bibinitperiod},
+           given={Pedro},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {ACM}%
+      }
+      \strng{namehash}{d26c6b359a1eeb37a0c56adf84bb7590}
+      \strng{fullhash}{c94f750d279df52c9fe53764851b19ed}
+      \strng{bibnamehash}{d26c6b359a1eeb37a0c56adf84bb7590}
+      \strng{authorbibnamehash}{d26c6b359a1eeb37a0c56adf84bb7590}
+      \strng{authornamehash}{d26c6b359a1eeb37a0c56adf84bb7590}
+      \strng{authorfullhash}{c94f750d279df52c9fe53764851b19ed}
+      \field{labelalpha}{Ben+21}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 27th ACM SIGKDD Conference on Knowledge Discovery \& Data Mining}
+      \field{month}{8}
+      \field{series}{KDD ’21}
+      \field{title}{TimeSHAP: Explaining Recurrent Models through Sequence Perturbations}
+      \field{year}{2021}
+      \verb{doi}
+      \verb 10.1145/3447548.3467166
+      \endverb
+      \verb{urlraw}
+      \verb http://dx.doi.org/10.1145/3447548.3467166
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1145/3447548.3467166
+      \endverb
+    \endentry
+    \entry{ESL}{book}{}
+      \name{author}{3}{}{%
+        {{hash=e1440a33ef594fbe1375568d9288cc69}{%
+           family={Hastie},
+           familyi={H\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+        {{hash=21780bd4ff9a4cecd018c6cfdbd80280}{%
+           family={Tibshirani},
+           familyi={T\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+        {{hash=1744c71a13ec525bb87612fff17bcfe1}{%
+           family={Friedman},
+           familyi={F\bibinitperiod},
+           given={J.},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer New York}%
+      }
+      \strng{namehash}{95aee2243bf53075e61eef0f7b9640aa}
+      \strng{fullhash}{95aee2243bf53075e61eef0f7b9640aa}
+      \strng{bibnamehash}{95aee2243bf53075e61eef0f7b9640aa}
+      \strng{authorbibnamehash}{95aee2243bf53075e61eef0f7b9640aa}
+      \strng{authornamehash}{95aee2243bf53075e61eef0f7b9640aa}
+      \strng{authorfullhash}{95aee2243bf53075e61eef0f7b9640aa}
+      \field{labelalpha}{HTF13}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{9780387216065}
+      \field{series}{Springer Series in Statistics}
+      \field{title}{The Elements of Statistical Learning: Data Mining, Inference, and Prediction}
+      \field{year}{2013}
+      \verb{urlraw}
+      \verb https://books.google.com/books?id=yPfZBwAAQBAJ
+      \endverb
+      \verb{url}
+      \verb https://books.google.com/books?id=yPfZBwAAQBAJ
+      \endverb
+    \endentry
+    \entry{ISL}{book}{}
+      \name{author}{4}{}{%
+        {{hash=d686cbaf836f7c8225c011e004f0b8b2}{%
+           family={James},
+           familyi={J\bibinitperiod},
+           given={G.},
+           giveni={G\bibinitperiod}}}%
+        {{hash=750a577413a6544c0e174c07af920b4a}{%
+           family={Witten},
+           familyi={W\bibinitperiod},
+           given={D.},
+           giveni={D\bibinitperiod}}}%
+        {{hash=e1440a33ef594fbe1375568d9288cc69}{%
+           family={Hastie},
+           familyi={H\bibinitperiod},
+           given={T.},
+           giveni={T\bibinitperiod}}}%
+        {{hash=21780bd4ff9a4cecd018c6cfdbd80280}{%
+           family={Tibshirani},
+           familyi={T\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer New York}%
+      }
+      \strng{namehash}{198ea9bd30b8efa614d71650d3798576}
+      \strng{fullhash}{bda4a3d23c8cde6b2553ae99ebb66ae0}
+      \strng{bibnamehash}{198ea9bd30b8efa614d71650d3798576}
+      \strng{authorbibnamehash}{198ea9bd30b8efa614d71650d3798576}
+      \strng{authornamehash}{198ea9bd30b8efa614d71650d3798576}
+      \strng{authorfullhash}{bda4a3d23c8cde6b2553ae99ebb66ae0}
+      \field{labelalpha}{Jam+13}
+      \field{sortinit}{J}
+      \field{sortinithash}{b2f54a9081ace9966a7cb9413811edb4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{9781461471387}
+      \field{series}{Springer Texts in Statistics}
+      \field{title}{An Introduction to Statistical Learning: with Applications in R}
+      \field{year}{2013}
+      \verb{urlraw}
+      \verb https://books.google.com/books?id=qcI_AAAAQBAJ
+      \endverb
+      \verb{url}
+      \verb https://books.google.com/books?id=qcI_AAAAQBAJ
+      \endverb
+    \endentry
+    \entry{PML}{book}{}
+      \name{author}{1}{}{%
+        {{hash=99413be56c82adf72b6474dcdf8d3023}{%
+           family={Murphy},
+           familyi={M\bibinitperiod},
+           given={Kevin\bibnamedelima P.},
+           giveni={K\bibinitperiod\bibinitdelim P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {MIT Press}%
+      }
+      \strng{namehash}{99413be56c82adf72b6474dcdf8d3023}
+      \strng{fullhash}{99413be56c82adf72b6474dcdf8d3023}
+      \strng{bibnamehash}{99413be56c82adf72b6474dcdf8d3023}
+      \strng{authorbibnamehash}{99413be56c82adf72b6474dcdf8d3023}
+      \strng{authornamehash}{99413be56c82adf72b6474dcdf8d3023}
+      \strng{authorfullhash}{99413be56c82adf72b6474dcdf8d3023}
+      \field{labelalpha}{Mur22}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Probabilistic Machine Learning: An introduction}
+      \field{year}{2022}
+      \verb{urlraw}
+      \verb probml.ai
+      \endverb
+      \verb{url}
+      \verb probml.ai
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

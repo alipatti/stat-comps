@@ -1,0 +1,54 @@
+---
+title: Stats Comps Check-in
+date: Jan 26, 2024
+documentclass: ali-base
+---
+
+\bigskip
+
+This check in has three sections: a status report of what I've learned and done so far, a description of how I plan to apply this knowledge to a sports data set, and my plan moving forward.
+
+## Status
+
+I've been using mostly \textit{Elements of Statistical Learning} [@ESL] to learn the material so far. I read chunks of the book you suggested in the project prompt [@ISL], but found that it didn't go into enough detail. My understanding is that the material in ESL is more-or-less a superset of the material in ISLR.
+
+In general, the book is amazing and has given me a much greater appreciation for the topics covered in earlier stats classes. Its development of SVMs through the framework of linear regression and basis expansion is much more principled than other texts I've looked at (including ISL). It took a while to work through all the preceding chapters leading up to SVMs and neural nets, but it was definitely worthwhile. It placed them into the larger context of statistical learning models and motivated their development instead of seeing them as black boxes that had seemingly been pulled out of thin air. I highly recommend the book for future students doing any sort of ML comps.
+
+The section on neural nets in both ISL and ESL is pretty weak, so I've also been doing a lot of reading and exploration on my own. I haven't found one comprehensive text that answers all my questions, so this has meant reading forums/papers/articles and watching a lot of YouTube videos from Andrei Kaparthy (one of the founding members of OpenAI who also happens to have a pretty active YouTube channel). \emph{Probabilistic Machine Learning} [@PML] has a section on sequence modeling using neural networks that seems very useful, but I haven't had a chance to really read it closely yet.
+
+I also haven't dug into Shapley values much beyond reading the sections that were linked in my comps prompt. I'm planning to do sequence modeling for my application, which makes computing the Shapley values trickier, but thankfully other people [@TimeSHAP] have thought about this and I should be able to adapt their work to my project. This is certainly an area that I need to read/think more about.
+
+## Application
+
+For the application portion of my comps, I plan to use a recurrent neural network to predict the result of incomplete basketball and soccer games using play-by-play data (e.g. passes, shots, assists, etc.). There's comprehensive data available for both sports (e.g. [basketball](https://www.basketball-reference.com/boxscores/pbp/202101200TOR.html), [soccer](http://github.com/statsbomb/open-data/)).
+
+To do this, I plan to encode the sequence of game events as a sequence of events $\set{\mathbf x_i}_{0 \leq i < T_i}$ with $\mathbf x_i \in \R^p$ and $T_i$ the length of the sequence. Each sequence will be labeled with a binary value $y_i \in \bit$ indicating the true winning team. I then plan to train the model on incomplete (truncated) sequences labeled with the corresponding $y_i$ value indicating the true winner. 
+
+Hopefully this will allow the model to develop some "understanding" of momentum and game dynamics beyond just the score line. There are lots of examples in sports (soccer especially) where despite a game being tied 0-0, a human watching would say that one team is clearly favored to win.
+
+I plan to use some sort of recurrent neural network as the model, but I don't know yet whether that will mean a vanilla RNN or some kind of gated network (GRU) or an LSTM. These are all available in PyTorch (the library I plan to use for implementing this), so experimenting with this should be as simple as changing a few lines of code.
+
+## Plans/Concerns
+
+There's still a lot for me to do.
+
+### Encoding the data
+
+I'm still experimenting with how to encode the event data as a sequence $\set{\mathbf x_i} \subseteq \R^p$ to be used as input for the RNN. The technique that seems to be most popular in the literature I've read is to reserve certain sections of each input vector for certain event types, and leave most of the input vector as zeros. The network is flexible enough that it should be able to interpret this. 
+
+There are some things that I definitely want to include in my encoding: event location, time in the game, success/failure, and the team making the action, to name a few. It would be cool to also somehow encode the player and/or team making the action though some kind of learned embedding a-la word2vec. This would be very cool if it worked, but it would add a lot of parameters to the network and I don't know if there's enough training data to make it work.
+
+Leading me to....
+
+### Quantity of data
+
+Neural nets take a lot of data to train, and I'm a little concerned that I don't have enough. Someone has done the hard work of scraping the basketball data and put it on Kaggle, but I may want to re-run the scraper (which they've made available) to get more data from a wider time window. If I can't get the model to train well on the data that I have, I can reduce the size of the network and/or reduce the dimensionality of the vectors used to encode each event. This should help.
+
+### The paper/talk
+
+I plan for the structure of the paper to be straightforward and follow the outline given in my prompt (abstract, intro, data, methods, results, conclusion).
+
+For the talk, I hope to make it accessible to people outside of stats, stressing the general series of steps in my process but leaving pretty much all technical details for the paper. Although the models themselves are quite dense, the high level understanding of using sequence classification to predict sports is quite easy to grasp.
+
+## References
+

@@ -1,0 +1,11 @@
+kloppy
+httpx
+httpx_cache
+pandas
+tqdm
+
+# install tensorflow with AMD/apple silicon GPU acceleration
+# IMPORTANT: versions must be some pairing from this table:
+# https://pypi.org/project/tensorflow-metal/
+tensorflow==2.13
+tensorflow-metal==1.0

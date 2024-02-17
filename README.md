@@ -25,3 +25,7 @@ Alistair Pattison, Carleton College, 2024
 
 - [ ] player/team embeddings
   - every action involving a player includes that player's traininable embedding
+
+## Data sources
+
+https://www.kaggle.com/datasets/schmadam97/nba-playbyplay-data-20182019?resource=download

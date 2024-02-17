@@ -13,3 +13,7 @@ output
 *.aux
 *.log
 *.tex
+*.bbl
+*.bcf
+*.blg
+*.run.xml

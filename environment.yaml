@@ -1,0 +1,20 @@
+name: stat-comps
+
+channels:
+  - pytorch-nightly
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.12
+
+  - ipykernel
+  - ipython
+  - black
+
+  - polars
+  - numpy
+  - pytorch
+
+  - tqdm
+

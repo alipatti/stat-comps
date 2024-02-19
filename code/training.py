@@ -1,16 +1,17 @@
-# TODO: clean up imports
-
+import os
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Any
+import json
+
+import torch
 from torch import nn
 from torch.nn.utils.rnn import PackedSequence
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset, Subset, random_split
-from tqdm import tqdm
-import torch
 import numpy as np
+from tqdm import tqdm
 
-from params import DEVICE, MODEL_CHECKPOINT_PATH
+from params import DEVICE
 from nba import NBADataset
 from model import SportSequenceModel
 
@@ -64,10 +65,12 @@ def _train_loop(
     training_data: DataLoader,
     optimizer: Optimizer,
     loss_function: LossFunction,
-):
+) -> dict[str, Any]:
     model.train()  # set to training mode
 
     losses = []
+    n_correct, total = 0, 0
+
     for x, y in tqdm(
         training_data,
         total=len(training_data),
@@ -83,25 +86,34 @@ def _train_loop(
 
         # forward pass
         optimizer.zero_grad()
-        outputs = model(x)
-        loss = loss_function(outputs.data, y.data)
+        predictions = model(x)
+        loss = loss_function(predictions.data, y.data)
 
         # backward pass
         loss.backward()
         optimizer.step()
 
         losses.append(loss.item())
+        n_correct += sum(y.data == (predictions.data > 0))
+        total += len(predictions.data)
 
-    print(f" - Average training loss: {np.mean(losses)}")
+    avg_loss = np.mean(losses)
+    accuracy = (n_correct / total).item()  # type: ignore
+    print(f" - Average training loss: {avg_loss}")
+    print(f" - Average training accuracy: {accuracy :.2%}")
+
+    return dict(avg_train_loss=avg_loss, train_accuracy=accuracy)
 
 
 def _test_loop(
     model: nn.Module,
     test_data: DataLoader,
     loss_function: LossFunction,
-):
+) -> dict[str, Any]:
     model.eval()  # set to eval mode
+
     losses = []
+    n_correct, total = 0, 0
 
     for x, y in tqdm(
         test_data,
@@ -110,47 +122,132 @@ def _test_loop(
         desc=" - Testing",
     ):
         # forward pass
-        outputs = model(x)
-        loss = loss_function(outputs.data, y.data)
-        losses.append(loss.item())
+        predictions = model(x)
+        loss = loss_function(predictions.data, y.data)
 
-    print(f" - Average test loss: {np.mean(losses)}")
+        # update stats
+        losses.append(loss.item())
+        n_correct += sum(y.data == (predictions.data > 0))
+        total += len(predictions.data)
+
+    avg_loss = np.mean(losses)
+    accuracy = (n_correct / total).item()  # type: ignore
+    print(f" - Average test loss: {avg_loss}")
+    print(f" - Average test accuracy: {accuracy :.2%}")
+
+    return dict(avg_test_loss=avg_loss, test_accuracy=accuracy)
+
+
+def _save_model(
+    base_path: Path,
+    model: nn.Module,
+    optimizer: Optimizer,
+    epoch: int,
+) -> Path:
+    os.makedirs(base_path, exist_ok=True)
+
+    path = base_path / f"epoch-{epoch:>04}.pt"
+    torch.save(
+        dict(
+            model=model.state_dict(),
+            optimizer=optimizer.state_dict(),
+            epoch=epoch,
+        ),
+        path,
+    )
+
+    return path
+
+
+def _load_latest_checkpoint(
+    base_path: Path | None,
+    model: nn.Module,
+    optimizer: Optimizer,
+) -> tuple[Path | None, int]:
+    if not base_path:
+        return None, 1
+
+    if not os.path.exists(base_path):
+        os.makedirs(base_path, exist_ok=True)
+        return None, 1
+
+    try:
+        path = sorted(list(base_path.glob("epoch-*")))[-1]
+    except IndexError:
+        return None, 1  # no checkpoints in the directory
+
+    state = torch.load(path)
+
+    # load model state in place
+    res = model.load_state_dict(state["model"])
+    assert not res.missing_keys and not res.unexpected_keys
+
+    res = optimizer.load_state_dict(state["optimizer"])
+    assert not res
+
+    return path, state["epoch"] + 1
 
 
 def train(
-    model: nn.Module,
+    model: SportSequenceModel,
     data: Dataset,
     optimizer_class=torch.optim.Adam,
     batch_size=500,
     epochs=10,
-    save_checkpoints_every=10,
+    checkpoint_path: Path | None = None,
+    checkpoint_every=10,
 ):
     model = model.to(DEVICE)
     optimizer = optimizer_class(model.parameters())
+
+    initial_checkpoint, starting_epoch = _load_latest_checkpoint(
+        checkpoint_path, model, optimizer
+    )
+
+    if initial_checkpoint:
+        print(f"Loaded checkpoint from {initial_checkpoint}.")
+
+    print("\n -:- MODEL -:- \n")
+    print(model)
 
     # TODO: weight to prioritize being right towards the end of games
     loss_function = nn.BCEWithLogitsLoss()
 
     training_data, test_data = train_test_loaders(data, batch_size)
 
-    print(f"Training {model} on {len(data)} sequences.")  # type: ignore
-    print(f"Using {DEVICE} device.")
+    print("\n -:- TRAINING -:- \n")
+    print(f"Training for {epochs} epochs on {len(data)} sequences using {DEVICE.upper()}.")  # type: ignore
+    print(f"Starting on epoch {starting_epoch}.")
 
-    for epoch in range(epochs):
-        print(f"Epoch {epoch + 1}/{epochs}")
-        _train_loop(model, training_data, optimizer, loss_function)
-        _test_loop(model, test_data, loss_function)
+    for epoch in range(starting_epoch, epochs + 1):
+        print(f"Epoch {epoch}/{epochs}")
+        train_stats = _train_loop(model, training_data, optimizer, loss_function)
+        test_stats = _test_loop(model, test_data, loss_function)
 
-        # TODO: save model checkpoint
+        if checkpoint_path:
+            with (checkpoint_path / "_training_stats.jsonl").open("at") as f:
+                stats = dict(epoch=epoch) | train_stats | test_stats
+                json.dump(stats, f)
+                f.write("\n")
+
+        if checkpoint_path and (epoch % checkpoint_every == 0):
+            path = _save_model(checkpoint_path, model, optimizer, epoch)
+            print(f" - Saved checkpoint to {path}")
 
 
 if __name__ == "__main__":
     # TODO: use all data
-    data = Subset(NBADataset(), list(range(200)))
+    data = Subset(NBADataset(), list(range(100)))
 
     sequence_dimension = data[0][0].shape[1]  # dimension of event representations
     rnn_hidden_dimension = 32
 
     model = SportSequenceModel(sequence_dimension, rnn_hidden_dimension)
 
-    train(model, data, batch_size=50)
+    train(
+        model,
+        data,
+        batch_size=50,
+        checkpoint_path=Path("../checkpoints/nba/"),
+        epochs=30,
+    )

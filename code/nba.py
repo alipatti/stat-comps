@@ -23,7 +23,9 @@ def raw_event_df() -> pl.DataFrame:
 
     glob_path = str(IN_PATH / "*.csv")
     seasons = [pl.read_csv(filepath) for filepath in glob.glob(glob_path)]
-    seasons[1].drop_in_place("")  # weird extra column for some reason
+    next(filter(lambda df: "" in df.columns, seasons))[1].drop_in_place(
+        ""
+    )  # weird extra column for some reason
 
     return pl.concat(seasons, how="vertical_relaxed")
 

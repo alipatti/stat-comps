@@ -17,4 +17,6 @@ output
 *.bcf
 *.blg
 *.run.xml
-data
+
+data/**/*.csv
+data/**/*.pt

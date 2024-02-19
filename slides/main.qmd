@@ -39,3 +39,35 @@ format: beamer
 - Simpler models lead to easier interpretation
 - But sometimes they don't work well, e.g., when number of samples or number of variables is very large.
 
+# Neural Networks
+
+## 10,000 ft
+
+emphasize similarities and differences with 
+
+## Training
+
+functions with easily computable gradients
+
+SGD
+
+## Sequence models
+
+RNNs
+
+# Application
+
+## The data
+
+## Encoding as sequences
+
+## Training
+
+## Evaluation
+
+cross-validation
+
+No equiv of AIC, BIC, etc.
+
+overfitting
+

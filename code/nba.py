@@ -1,6 +1,7 @@
 import glob
 import os
 from pathlib import Path
+from zipfile import ZipFile
 
 import polars as pl
 from polars.dataframe.group_by import GroupBy
@@ -14,6 +15,11 @@ OUT_PATH = DATA_ROOT / "nba-tensors"
 
 def raw_event_df() -> pl.DataFrame:
     print("Loading raw play-by-play data...")
+
+    if not IN_PATH.exists():
+        print("Extracting NBA zip file ...")
+        with ZipFile(DATA_ROOT / "kaggle-bbref-pbp.zip") as f:
+            f.extractall(IN_PATH)
 
     glob_path = str(IN_PATH / "*.csv")
     seasons = [pl.read_csv(filepath) for filepath in glob.glob(glob_path)]

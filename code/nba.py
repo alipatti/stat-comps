@@ -33,11 +33,16 @@ def game_dfs(events: pl.DataFrame) -> GroupBy:
         "ShotType",
         "ShotOutcome",
         "FreeThrowOutcome",
+        "FoulType",
+        "ReboundType",
+        "ViolationType",
+        "TurnoverType",
+        "TurnoverCause",
     ]
 
     print("Cleaning and aggregating...")
 
-    games = (
+    filtered_events = (
         events.with_columns(
             id=events["URL"].str.extract("/boxscores/(.*).html"),
             home_wins=events["HomeTeam"] == events["WinningTeam"],
@@ -45,12 +50,18 @@ def game_dfs(events: pl.DataFrame) -> GroupBy:
         .select("id", "home_wins", *categorical_cols, *numeric_cols)
         .cast({pl.String: pl.Categorical})
         .to_dummies(categorical_cols, drop_first=True)
-        .fill_null(0)
-        .fill_nan(0)
-        .group_by(("id",))
+        .fill_nan(None)  # replace nan with null
+        .fill_null(0)  # fill null with zeros
     )
 
-    print(f" - Found {len(events)} events across {len(games.first())} games.")
+    games = filtered_events.group_by(("id",))
+
+    n_events = games.len()["len"].sum()
+    n_games = len(games.first())
+    dimension = next(iter(games))[1].shape[1]
+
+    print(f" - Found {n_events} relevant events across {n_games} games.")
+    print(f" - Event dimension: {dimension - 2}")
 
     return games
 
@@ -59,6 +70,7 @@ def write_tensors(games: GroupBy):
     """Converts raw play-by-play data into sequences of tensors."""
 
     os.makedirs(OUT_PATH, exist_ok=True)
+
     print(f"Writing tensors to {OUT_PATH}...")
 
     for group, game in games:
@@ -94,7 +106,7 @@ class NBADataset(Dataset):
         return seq, labels
 
 
-def naieve_accuracy(games: GroupBy) -> float:
+def naive_accuracy(games: GroupBy) -> float:
     """Predicts whoever is winning at that moment."""
 
     n_correct, total = 0, 0
@@ -112,7 +124,7 @@ if __name__ == "__main__":
     events = raw_event_df()
     games = game_dfs(events)
 
-    print(f"Naieve accuracy: {naieve_accuracy(games):.3%}")
+    print(f"Naive accuracy: {naive_accuracy(games):.3%}")
 
     if not os.path.exists(OUT_PATH):
         write_tensors(games)

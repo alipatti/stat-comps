@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.nn.utils.rnn import PackedSequence
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader, Dataset, Subset, random_split
+from torch.utils.data import DataLoader, Dataset, random_split
 import numpy as np
 from tqdm import tqdm
 
@@ -216,7 +216,8 @@ def train(
     training_data, test_data = train_test_loaders(data, batch_size)
 
     print("\n -:- TRAINING -:- \n")
-    print(f"Training for {epochs} epochs on {len(data)} sequences using {DEVICE.upper()}.")  # type: ignore
+    print(f"Training for {epochs} epochs  using {DEVICE.upper()}.")
+    print(f"Data: {len(data)} sequences of dimension {data[0][0].shape[1]}")  # type: ignore
     print(f"Starting on epoch {starting_epoch}.")
 
     for epoch in range(starting_epoch, epochs + 1):
@@ -236,8 +237,7 @@ def train(
 
 
 if __name__ == "__main__":
-    # TODO: use all data
-    data = Subset(NBADataset(), list(range(100)))
+    data = NBADataset()
 
     sequence_dimension = data[0][0].shape[1]  # dimension of event representations
     rnn_hidden_dimension = 32
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     train(
         model,
         data,
-        batch_size=50,
+        batch_size=200,
         checkpoint_path=Path("../checkpoints/nba/"),
         epochs=30,
     )

@@ -121,6 +121,10 @@ def _test_loop(
         leave=False,
         desc=" - Testing",
     ):
+        # move to GPU (if it exists)
+        x = x.to(DEVICE)
+        y = y.to(DEVICE)
+
         # forward pass
         predictions = model(x)
         loss = loss_function(predictions.data, y.data)

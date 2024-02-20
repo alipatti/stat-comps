@@ -43,13 +43,23 @@ format: beamer
 
 ## 10,000 ft
 
-emphasize similarities and differences with 
+emphasize similarities and differences with traditional methods 
+
+Linear transformation + non-linearity + scale
 
 ## Training
 
 functions with easily computable gradients
 
 SGD
+
+illustration of chain rule
+
+$$
+f = Ax + b
+$$
+
+computational graph diagram
 
 ## Sequence models
 
@@ -61,7 +71,13 @@ RNNs
 
 ## Encoding as sequences
 
+give example of raw data and the transformations
+
 ## Training
+
+show output of training script
+
+talk about hardware, gpu usage, etc.
 
 ## Evaluation
 
@@ -70,4 +86,8 @@ cross-validation
 No equiv of AIC, BIC, etc.
 
 overfitting
+
+## Interpretation
+
+shapley values
 

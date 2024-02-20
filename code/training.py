@@ -220,7 +220,7 @@ def train(
     training_data, test_data = train_test_loaders(data, batch_size)
 
     print("\n -:- TRAINING -:- \n")
-    print(f"Training for {epochs} epochs  using {DEVICE.upper()}.")
+    print(f"Training for {epochs} epochs using {DEVICE.upper()}.")
     print(f"Data: {len(data)} sequences of dimension {data[0][0].shape[1]}")  # type: ignore
     print(f"Starting on epoch {starting_epoch}.")
 

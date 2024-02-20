@@ -199,7 +199,7 @@ def train(
     batch_size=500,
     epochs=10,
     checkpoint_path: Path | None = None,
-    checkpoint_every=10,
+    checkpoint_every=5,
 ):
     model = model.to(DEVICE)
     optimizer = optimizer_class(model.parameters())
@@ -243,15 +243,25 @@ def train(
 if __name__ == "__main__":
     data = NBADataset()
 
-    sequence_dimension = data[0][0].shape[1]  # dimension of event representations
-    rnn_hidden_dimension = 32
-
-    model = SportSequenceModel(sequence_dimension, rnn_hidden_dimension)
+    D_seq = data[0][0].shape[1]  # dimension of event representations
 
     train(
-        model,
+        SportSequenceModel(D_seq, D_rnn=32),
         data,
-        batch_size=200,
-        checkpoint_path=Path("../checkpoints/nba/"),
-        epochs=30,
+        checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
+        epochs=20,
+    )
+
+    train(
+        SportSequenceModel(D_seq, D_rnn=64),
+        data,
+        checkpoint_path=Path("../checkpoints/nba/64-hidden/"),
+        epochs=20,
+    )
+
+    train(
+        SportSequenceModel(D_seq, D_rnn=128),
+        data,
+        checkpoint_path=Path("../checkpoints/nba/128-hidden/"),
+        epochs=20,
     )

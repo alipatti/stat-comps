@@ -3,6 +3,7 @@ from typing import Iterable
 from zipfile import ZipFile
 import json
 from urllib.request import urlretrieve
+import itertools
 
 import polars as pl
 import polars.selectors as cs
@@ -16,11 +17,12 @@ STATSBOMB_ZIP_URL = (
     "https://github.com/statsbomb/open-data/archive/refs/heads/master.zip"
 )
 
-LOACAL_ZIP_PATH = DATA_ROOT / "statsbomb-events.zip"
+LOCAL_ZIP_PATH = DATA_ROOT / "statsbomb-events.zip"
+LOCAL_DF_PATH = DATA_ROOT / "statsbomb-events.parquet"
 STATSBOMB_TENSOR_PATH = DATA_ROOT / "statsbomb-tensors/"
 
 
-def all_comps(zip):
+def all_comps(zip) -> list[dict]:
     return json.load(zip.open("open-data-master/data/competitions.json"))
 
 
@@ -63,28 +65,35 @@ def events_in_matches(match_list: Iterable[dict], zip: ZipFile) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
-    if not os.path.exists(LOACAL_ZIP_PATH):
+    if not os.path.exists(LOCAL_ZIP_PATH):
         print("Downloading statsbomb data (this may take a while)")
         print(f" - Source: {STATSBOMB_ZIP_URL}")
-        print(f" - Local path: {LOACAL_ZIP_PATH}")
-        path, response = urlretrieve(STATSBOMB_ZIP_URL, LOACAL_ZIP_PATH)
+        print(f" - Local path: {LOCAL_ZIP_PATH}")
+        path, response = urlretrieve(STATSBOMB_ZIP_URL, LOCAL_ZIP_PATH)
 
-    zip = ZipFile(LOACAL_ZIP_PATH)
+    if not os.path.exists(LOCAL_DF_PATH):
+        zip = ZipFile(LOCAL_ZIP_PATH)
 
-    comps = all_comps(zip)
-    matches = matches_in_comp(comps[0], zip)[:100]
-    events = events_in_matches(matches, zip)
+        comps = all_comps(zip)
+        matches = list(
+            itertools.chain.from_iterable(matches_in_comp(comp, zip) for comp in comps)
+        )
+        events = events_in_matches(matches, zip)
 
-    match_groups = tqdm(
-        events.group_by(("match_id",)),
-        desc="Writing tensors",
-        total=len(matches),
-    )
+        events.write_parquet(LOCAL_DF_PATH)
 
-    os.makedirs(STATSBOMB_TENSOR_PATH, exist_ok=True)
+    if not os.path.exists(STATSBOMB_TENSOR_PATH):
+        events = pl.read_parquet(LOCAL_DF_PATH)
+        matches = events.group_by(("match_id",))
 
-    for group, match_df in match_groups:
-        path: str = STATSBOMB_TENSOR_PATH / (group[0] + ".pt")  # type: ignore
+        os.makedirs(STATSBOMB_TENSOR_PATH, exist_ok=True)
 
-        tensor = torch.from_numpy(match_df.drop("match_id").to_numpy())
-        torch.save(tensor, path)
+        for group, match_df in tqdm(
+            matches,
+            desc="Writing tensors",
+            total=len(matches.first()),
+        ):
+            path: str = STATSBOMB_TENSOR_PATH / (group[0] + ".pt")  # type: ignore
+
+            tensor = torch.from_numpy(match_df.drop("match_id").to_numpy())
+            torch.save(tensor, path)

@@ -10,14 +10,14 @@ from kloppy import statsbomb
 from tqdm import tqdm
 import torch
 
-from nba import DATA_ROOT
+from params import DATA_ROOT
 
 STATSBOMB_ZIP_URL = (
     "https://github.com/statsbomb/open-data/archive/refs/heads/master.zip"
 )
 
-IN_PATH = DATA_ROOT / "statsbomb-events.zip"
-OUT_PATH = DATA_ROOT / "statsbomb-tensors/"
+LOACAL_ZIP_PATH = DATA_ROOT / "statsbomb-events.zip"
+STATSBOMB_TENSOR_PATH = DATA_ROOT / "statsbomb-tensors/"
 
 
 def all_comps(zip):
@@ -63,16 +63,16 @@ def events_in_matches(match_list: Iterable[dict], zip: ZipFile) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
-    if not os.path.exists(IN_PATH):
+    if not os.path.exists(LOACAL_ZIP_PATH):
         print("Downloading statsbomb data (this may take a while)")
         print(f" - Source: {STATSBOMB_ZIP_URL}")
-        print(f" - Local path: {IN_PATH}")
-        path, response = urlretrieve(STATSBOMB_ZIP_URL, IN_PATH)
+        print(f" - Local path: {LOACAL_ZIP_PATH}")
+        path, response = urlretrieve(STATSBOMB_ZIP_URL, LOACAL_ZIP_PATH)
 
-    zip = ZipFile(IN_PATH)
+    zip = ZipFile(LOACAL_ZIP_PATH)
 
     comps = all_comps(zip)
-    matches = matches_in_comp(comps[0], zip)[:3]
+    matches = matches_in_comp(comps[0], zip)[:100]
     events = events_in_matches(matches, zip)
 
     match_groups = tqdm(
@@ -81,10 +81,10 @@ if __name__ == "__main__":
         total=len(matches),
     )
 
-    os.makedirs(OUT_PATH, exist_ok=True)
+    os.makedirs(STATSBOMB_TENSOR_PATH, exist_ok=True)
 
     for group, match_df in match_groups:
-        path: str = OUT_PATH / (group[0] + ".pt")  # type: ignore
+        path: str = STATSBOMB_TENSOR_PATH / (group[0] + ".pt")  # type: ignore
 
         tensor = torch.from_numpy(match_df.drop("match_id").to_numpy())
         torch.save(tensor, path)

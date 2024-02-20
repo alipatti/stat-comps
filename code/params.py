@@ -1,10 +1,8 @@
 import torch
 from pathlib import Path
 
-DATA_PATH = Path("../data")
-MODEL_CHECKPOINT_PATH = Path("../models")
-IN_PATH = DATA_PATH / "nba-raw"
-OUT_PATH = DATA_PATH / "nba-tensors"
+DATA_ROOT = Path("../data")
+CHECKPOINT_ROOT = Path("../models")
 
 DEVICE = (
     "cuda"

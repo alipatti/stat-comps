@@ -10,12 +10,38 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset, random_split
 import numpy as np
 from tqdm import tqdm
+from statsbomb import STATSBOMB_TENSOR_PATH
 
 from params import DEVICE
-from nba import NBADataset
 from model import SportSequenceModel
+from nba import NBA_TENSOR_PATH
 
 type LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
+
+
+class SportSequenceDataset(Dataset):
+    def __init__(
+        self,
+        tensor_path: Path | str,
+    ) -> None:
+        self.paths = list(map(str, Path(tensor_path).glob("*.pt")))
+
+    def __len__(self) -> int:
+        return len(self.paths)
+
+    def __getitem__(self, i) -> tuple[torch.Tensor, torch.Tensor]:
+        path = self.paths[i]
+        seq = torch.load(path)
+        outcome = str(path).split("_", maxsplit=1)[1]
+        labels = (
+            torch.ones(seq.size(0))
+            if outcome == "home_win"
+            else torch.zeros(seq.size(0))
+            if outcome == "away_win"
+            else 0.5 * torch.ones(seq.size(0))  # draw
+        )
+
+        return seq, labels
 
 
 def pack_sequences(
@@ -195,10 +221,10 @@ def _load_latest_checkpoint(
 def train(
     model: SportSequenceModel,
     data: Dataset,
+    checkpoint_path: Path,
     optimizer_class=torch.optim.Adam,
     batch_size=500,
     epochs=80,
-    checkpoint_path: Path | None = None,
     checkpoint_every=5,
 ):
     model = model.to(DEVICE)
@@ -221,6 +247,7 @@ def train(
 
     print("\n -:- TRAINING -:- \n")
     print(f"Training for {epochs} epochs using {DEVICE.upper()}.")
+    print(f"Saving checkpoints to {checkpoint_path}")
     print(f"Data: {len(data)} sequences of dimension {data[0][0].shape[1]}")  # type: ignore
     print(f"Starting on epoch {starting_epoch}.")
 
@@ -241,24 +268,39 @@ def train(
 
 
 if __name__ == "__main__":
-    data = NBADataset()
+    # --- SOCCER MODELS ---
 
-    D_seq = data[0][0].shape[1]  # dimension of event representations
+    statsbomb_data = SportSequenceDataset(STATSBOMB_TENSOR_PATH)
+    D_seq_statsbomb = statsbomb_data[0][0].shape[1]  # dimension of event representations
 
     train(
-        SportSequenceModel(D_seq, D_rnn=32),
-        data,
+        SportSequenceModel(D_seq_statsbomb, D_rnn=64, multi_layer=True),
+        statsbomb_data,
+        checkpoint_path=Path("../checkpoints/statsbomb/64-hidden-multilayer/"),
+        epochs=1,
+        checkpoint_every=1,
+        batch_size=10,
+    )
+
+    # --- BASEKTBALL MODELS ---
+
+    nba_data = SportSequenceDataset(NBA_TENSOR_PATH)
+    D_seq_nba = nba_data[0][0].shape[1]  # dimension of event representations
+
+    train(
+        SportSequenceModel(D_seq_nba, D_rnn=32),
+        nba_data,
         checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
     )
 
     train(
-        SportSequenceModel(D_seq, D_rnn=64),
-        data,
+        SportSequenceModel(D_seq_nba, D_rnn=64),
+        nba_data,
         checkpoint_path=Path("../checkpoints/nba/64-hidden/"),
     )
 
     train(
-        SportSequenceModel(D_seq, D_rnn=128),
-        data,
+        SportSequenceModel(D_seq_nba, D_rnn=128),
+        nba_data,
         checkpoint_path=Path("../checkpoints/nba/128-hidden/"),
     )

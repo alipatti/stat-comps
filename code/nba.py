@@ -6,22 +6,22 @@ from zipfile import ZipFile
 import polars as pl
 from polars.dataframe.group_by import GroupBy
 import torch
-from torch.utils.data import Dataset
 
-DATA_ROOT = Path("../data")
-IN_PATH = DATA_ROOT / "nba-raw"
-OUT_PATH = DATA_ROOT / "nba-tensors"
+from params import DATA_ROOT
+
+NBA_DATA_PATH = DATA_ROOT / "nba-raw"
+NBA_TENSOR_PATH = DATA_ROOT / "nba-tensors"
 
 
 def raw_event_df() -> pl.DataFrame:
     print("Loading raw play-by-play data...")
 
-    if not IN_PATH.exists():
+    if not NBA_DATA_PATH.exists():
         print("Extracting NBA zip file ...")
         with ZipFile(DATA_ROOT / "kaggle-bbref-pbp.zip") as f:
-            f.extractall(IN_PATH)
+            f.extractall(NBA_DATA_PATH)
 
-    glob_path = str(IN_PATH / "*.csv")
+    glob_path = str(NBA_DATA_PATH / "*.csv")
     seasons = [pl.read_csv(filepath) for filepath in glob.glob(glob_path)]
 
     return pl.concat(seasons, how="diagonal_relaxed").drop("")
@@ -74,9 +74,9 @@ def game_dfs(events: pl.DataFrame) -> GroupBy:
 def write_tensors(games: GroupBy):
     """Converts raw play-by-play data into sequences of tensors."""
 
-    os.makedirs(OUT_PATH, exist_ok=True)
+    os.makedirs(NBA_TENSOR_PATH, exist_ok=True)
 
-    print(f"Writing tensors to {OUT_PATH}...")
+    print(f"Writing tensors to {NBA_TENSOR_PATH}...")
 
     for group, game in games:
         seq = game.drop("id", "home_wins").to_numpy().astype("float32")
@@ -84,31 +84,9 @@ def write_tensors(games: GroupBy):
         filename = (
             game_id + ("_home_win" if game["home_wins"][0] else "_away_win") + ".pt"
         )
-        torch.save(torch.from_numpy(seq), OUT_PATH / filename)
+        torch.save(torch.from_numpy(seq), NBA_TENSOR_PATH / filename)
 
     print("Done!")
-
-
-class NBADataset(Dataset):
-    def __init__(
-        self,
-        seq_path: Path | str = OUT_PATH,
-    ) -> None:
-        self.paths = list(map(str, Path(OUT_PATH).glob("*.pt")))
-
-    def __len__(self) -> int:
-        return len(self.paths)
-
-    def __getitem__(self, i) -> tuple[torch.Tensor, torch.Tensor]:
-        path = self.paths[i]
-        seq = torch.load(path)
-        labels = (
-            torch.ones(seq.size(0))
-            if str(path).split("_")[1] == "home"
-            else torch.zeros(seq.size(0))
-        )
-
-        return seq, labels
 
 
 def naive_accuracy(games: GroupBy) -> float:
@@ -131,5 +109,5 @@ if __name__ == "__main__":
 
     print(f"Naive accuracy: {naive_accuracy(games):.3%}")
 
-    if not os.path.exists(OUT_PATH):
+    if not os.path.exists(NBA_TENSOR_PATH):
         write_tensors(games)

@@ -2,6 +2,7 @@ from torch import nn
 from torch.nn.utils.rnn import PackedSequence
 import torch
 
+
 def pack_data_like(data: torch.Tensor, like: PackedSequence):
     return PackedSequence(
         data=data,
@@ -16,11 +17,19 @@ class SportSequenceModel(nn.Module):
     D_rnn: int  # dimension of RNN hidden state
     N: int  # batch size
 
-    def __init__(self, D_seq, D_rnn):
+    def __init__(self, D_seq, D_rnn, multi_layer=False):
         super().__init__()
 
         self.rnn = nn.GRU(D_seq, D_rnn)
-        self.rnn_to_logit = nn.Linear(D_rnn, 1)
+
+        if multi_layer:
+            self.rnn_to_logit = nn.Sequential(
+                nn.Linear(D_rnn, D_rnn),
+                nn.ReLU(),
+                nn.Linear(D_rnn, 1),
+            )
+        else:
+            self.rnn_to_logit = nn.Linear(D_rnn, 1)
 
     def forward(self, packed_seqs: PackedSequence) -> PackedSequence:
         """Takes list of sequences of dimension D_in and returns a list of sequences of dimension 1."""

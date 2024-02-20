@@ -197,7 +197,7 @@ def train(
     data: Dataset,
     optimizer_class=torch.optim.Adam,
     batch_size=500,
-    epochs=10,
+    epochs=80,
     checkpoint_path: Path | None = None,
     checkpoint_every=5,
 ):
@@ -249,19 +249,16 @@ if __name__ == "__main__":
         SportSequenceModel(D_seq, D_rnn=32),
         data,
         checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
-        epochs=20,
     )
 
     train(
         SportSequenceModel(D_seq, D_rnn=64),
         data,
         checkpoint_path=Path("../checkpoints/nba/64-hidden/"),
-        epochs=20,
     )
 
     train(
         SportSequenceModel(D_seq, D_rnn=128),
         data,
         checkpoint_path=Path("../checkpoints/nba/128-hidden/"),
-        epochs=20,
     )

@@ -20,3 +20,5 @@ output
 
 data/**/*.csv
 data/**/*.pt
+data/statsbomb-events.zip
+

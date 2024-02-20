@@ -1,2 +1,1 @@
 data/kaggle-bbref-pbp.zip filter=lfs diff=lfs merge=lfs -text
-data/statsbomb-events.zip filter=lfs diff=lfs merge=lfs -text

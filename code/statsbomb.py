@@ -2,7 +2,7 @@ import os
 from typing import Iterable
 from zipfile import ZipFile
 import json
-from pprint import pprint
+from urllib.request import urlretrieve
 
 import polars as pl
 import polars.selectors as cs
@@ -11,6 +11,10 @@ from tqdm import tqdm
 import torch
 
 from nba import DATA_ROOT
+
+STATSBOMB_ZIP_URL = (
+    "https://github.com/statsbomb/open-data/archive/refs/heads/master.zip"
+)
 
 IN_PATH = DATA_ROOT / "statsbomb-events.zip"
 OUT_PATH = DATA_ROOT / "statsbomb-tensors/"
@@ -31,17 +35,16 @@ def events_in_match(match_dict, zip: ZipFile) -> pl.DataFrame:
     lineup_path = f"open-data-master/data/lineups/{match_id}.json"
 
     sb_obj = statsbomb.load(zip.open(event_path), zip.open(lineup_path))
-    df = pl.from_pandas(sb_obj.to_df())
+    df = sb_obj.to_df(engine="polars")
 
     home_team = str(match_dict["home_team"]["home_team_id"])
     score_diff = match_dict["home_score"] - match_dict["away_score"]
     result = "away_win" if score_diff < 0 else "home_win" if score_diff > 0 else "draw"
 
-    return (
-        # convert team_id to home/away
-        df.with_columns(df.select(cs.contains("team")) == home_team).with_columns(
-            pl.lit(f"{match_id}_{result}").alias("match_id")
-        )
+    # convert cols with team_id into home/away
+    # e.g. 217 -> true, 318 -> false
+    return df.with_columns(df.select(cs.contains("team")) == home_team).with_columns(
+        pl.lit(f"{match_id}_{result}").alias("match_id")
     )
 
 
@@ -60,10 +63,16 @@ def events_in_matches(match_list: Iterable[dict], zip: ZipFile) -> pl.DataFrame:
 
 
 if __name__ == "__main__":
+    if not os.path.exists(IN_PATH):
+        print("Downloading statsbomb data (this may take a while)")
+        print(f" - Source: {STATSBOMB_ZIP_URL}")
+        print(f" - Local path: {IN_PATH}")
+        path, response = urlretrieve(STATSBOMB_ZIP_URL, IN_PATH)
+
     zip = ZipFile(IN_PATH)
 
     comps = all_comps(zip)
-    matches = matches_in_comp(comps[0], zip)[:100]
+    matches = matches_in_comp(comps[0], zip)[:3]
     events = events_in_matches(matches, zip)
 
     match_groups = tqdm(

@@ -12,11 +12,19 @@ output
 # latex junk
 *.aux
 *.log
-*.tex
 *.bbl
 *.bcf
 *.blg
 *.run.xml
+*.fdb_latexmk
+*.fls
+*.nav
+*.out
+*.pdf
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
 
 data/**/*.csv
 data/**/*.pt

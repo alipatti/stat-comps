@@ -1,0 +1,62 @@
+\documentclass{beamer}
+
+\title{{Sports as Sequences} \\ \small An Introduction to Deep Learning}
+\author{Alistair Pattison}
+\date{Feb. 22, 2024}
+
+\usepackage{ali-macros}
+
+\usepackage{tikz}
+\usetikzlibrary{overlay-beamer-styles}
+\usetikzlibrary{graphs, quotes, positioning, chains, graphdrawing, matrix}
+\usegdlibrary{layered}
+
+% theming
+\usefonttheme{structuresmallcapsserif}
+\useinnertheme[]{rounded}
+
+% hide navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% colors
+\usecolortheme{spruce}
+\setbeamercolor{block title}{use=frametitle, fg=frametitle.fg, bg=frametitle.bg}
+\setbeamercolor{block body}{use=frametitle, bg=frametitle.bg!50!white}
+\setbeamercolor{structure}{fg=black}
+
+% lists
+\setbeamertemplate{itemize item}{-}
+\setbeamertemplate{itemize subitem}{-}
+\setbeamertemplate{itemize subsubitem}{-}
+\setbeamertemplate{enumerate items}[default]
+\setbeamertemplate{sections/subsections in toc}[sections numbered]
+
+
+
+% show title at beginning of section
+\AtBeginSection[]{
+  \begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt, center, rounded=true]{title}
+    \usebeamerfont{title}\insertsectionhead\par%
+  \end{beamercolorbox}
+
+  \bigskip
+
+  % \tableofcontents[currentsection]
+  \vfill
+  \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+	\titlepage
+\end{frame}
+
+\input{sections/0-intro.tex}
+\input{sections/1-neural-nets.tex}
+\input{sections/2-application.tex}
+
+\end{document}

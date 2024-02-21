@@ -16,6 +16,8 @@ biblatexoptions:
   - style=alphabetic
 
 format:
+  beamer:
+    pdf-engine: lualatex
   pdf:
     pdf-engine: pdflatex
     header-includes: |

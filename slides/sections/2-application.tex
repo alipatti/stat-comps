@@ -17,10 +17,16 @@
 
 	How do we get this into a format that we can feed into a neural network?
 
+	\pause
+
+	\begin{center}
+		\includegraphics[width = \textwidth]{play-by-play-encoding.png}
+	\end{center}
+
 \end{frame}
 
 \begin{frame}[t]{Recurrent Neural Networks}
-	\begin{itemize}
+	\begin{itemize}[<+->]
 		\item $x_t$: event at time $t$
 		\item $p_t$: win probability for home team at time $t$
 		\item $h_t$: state of the game at time $t$
@@ -38,12 +44,12 @@
 
 			\pause
 
-			\node[left = of rnn] (htm1) {$h_{t-1}$};
-
 			\node[
 				below = of xt, draw, rounded corners,
 				inner sep=10pt, outer sep=5pt
 			] (rnn) {RNN};
+
+			\node[left = of rnn] (htm1) {$h_{t-1}$};
 
 			\draw (xt) -- (rnn);
 			\draw (htm1) -- (rnn);
@@ -125,17 +131,78 @@
 \end{frame}
 
 \begin{frame}{Training}
+	\begin{itemize}[<+->]
+		\item Implemented using the \texttt{pytorch} Python library.
 
+		      \medskip
+
+		\item Trained on $3,040,524$ events across $6,600$ NBA games using binary cross-entropy loss.
+
+		      \medskip
+
+		\item Tested a variety of different models
+		      \begin{itemize}
+			      \item dimension of hidden state $h_t$
+			      \item different models for computing $p_t$ from $h_t$
+			      \item different forms of RNNs (LSTM, GRU)
+		      \end{itemize}
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{How'd we do?}
 	\textbf{The good news:}
+	\begin{itemize}
+		\item Our RNN gets 73 percent accuracy!
+	\end{itemize}
+
+	\bigskip \pause
 
 	\textbf{The bad news:}
+	\begin{itemize}
+		\item Picking the current leader gets 73 percent accuracy...
+	\end{itemize}
+
+	\bigskip \pause
+
+	\textbf{Implications:}
+	\begin{itemize}
+		\item Our model learned to just pick the currently-winning team.
+		      \note{(More on this in the paper)}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Why did this happen?}
+	\begin{enumerate}[<+->]
+		\item Score \emph{is} the best predictor the winner.
+		\item The model isn't appropriate.
+		\item I don't know what I'm doing.
+	\end{enumerate}
 \end{frame}
 
 \begin{frame}{Next steps}
-	Soccer (ran out of time)
+	\textbf{Other sports}
 
-	much more uncertainty, much less scoring,
+	\begin{itemize}
+		\item Less scoring in hockey and soccer--score caries less information?
+		      \note{if we think about shots and chances as random events, sports that score}
+	\end{itemize}
+
+	\pause \bigskip
+
+	\textbf{Incorporate player information}
+
+	\begin{itemize}
+		\item Steph Curry taking a shot is different from Markelle Fultz
+		\item Side effect: player and/or team embeddings?
+	\end{itemize}
+
+	\pause \bigskip
+
+	\textbf{Different network architecture}
+
+	\begin{itemize}
+		\item Smarter pre-/post-processing?
+		\item Stacking RNN layers?
+		\item Transformer?
+	\end{itemize}
 \end{frame}

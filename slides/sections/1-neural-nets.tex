@@ -1,22 +1,87 @@
 \section{Neural Networks}
 
-\begin{frame}{Linear model}
+\begin{frame}{What even are they?}
+
+	\pause
+
+	\begin{definition}
+		\smallskip
+		\begin{center}
+			\text{neural networks}
+			= \text{linear functions} + \text{non-linearities}
+		\end{center}
+		\smallskip
+	\end{definition}
+
+\end{frame}
+
+\begin{frame}{What even are they?}
+
 	In linear regression, we assume
-	\begin{equation}
-		f(x) = Ax + b + \epsilon
-	\end{equation}
+	\begin{equation*}
+		f(x) = Ax + b
+	\end{equation*}
 
 	What if we throw in a little non-linearity?
 
-	% TODO: finish this slide
-	[salt bae meme]
+	\begin{center}
+		\includegraphics[width = .6 \textwidth]{salt-bae.jpg}
+	\end{center}
 
 \end{frame}
 
 \begin{frame}{Introducing non-linearity}
-	% TODO: make this slide
+	\textbf{The pieces:}
 
-	Composition of linear functions with non-linear functions
+	\begin{align*}
+		\onslide<+->{f : \R^n \to \R^k      & \qquad & f(x)      & = A x + b \\}
+		\smallskip
+		\onslide<+->{\sigma : \R^k \to \R^k &        & \sigma(x) & \frac{e^x}{1+e^x}\\}
+		\smallskip
+		\onslide<1->{g : \R^k \to \R_m      &        & g(x)      & = C x}
+	\end{align*}
+
+	\pause
+
+	\textbf{All together:}
+
+	\begin{equation}
+		h = g \of \sigma \of f
+	\end{equation}
+
+	\begin{equation*}
+		\R^n
+		\ \underset{f}{\longrightarrow} \ \R^k
+		\ \underset{\sigma}{\longrightarrow} \  \R^k
+		\ \underset{g}{\longrightarrow} \ \R^m
+	\end{equation*}
+\end{frame}
+
+\begin{frame}{Why ``neural''?}
+	\begin{center}
+		\includegraphics[width = .7 \textwidth]{neural-net.png}
+	\end{center}
+
+	\pause
+
+	\begin{center}
+		``Multi-layer perceptron''
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\begin{center}
+		\textbf{This seems contrived... why do we care?}
+	\end{center}
+
+	\bigskip \pause
+
+	\begin{center}
+		\begin{enumerate}
+			\item Expressiveness
+			\item
+		\end{enumerate}
+	\end{center}
 \end{frame}
 
 \begin{frame}{Expressiveness}
@@ -24,7 +89,7 @@
 
 	For any continuous $f : K \subseteq \R^n \to \R^m$, there exists a sequence of functions
 	\begin{equation*}
-		g_n :
+		h_i :
 		\R^n
 		\ \xrightarrow{Ax + b} \ \R^k
 		\ \xrightarrow{\sigma(x)} \  \R^k
@@ -36,8 +101,9 @@
 
 	\textbf{In practice}
 
-	``"Neural networks can approximate pretty much anything.''
-
+	\begin{itemize}
+		\item ``Neural networks can approximate pretty much anything.''
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{Anything?}
@@ -67,7 +133,7 @@
 		}
 	\end{center}
 
-	Simple network we've described gets above $95\%$ on this task.
+	\note{Simple network (multi-layer perceptron) we've described gets above $95\%$ on this task.}
 \end{frame}
 
 \begin{frame}{Anything?}
@@ -91,7 +157,9 @@
 
 	\note{Okay, these things are very expressive and very powerful, but we're sweeping a huge amount under the rug.}
 
-	\textbf{How do we estimate the parameters?}
+	\begin{center}
+		\textbf{How do we estimate the parameters?}
+	\end{center}
 \end{frame}
 
 \begin{frame}{Training}
@@ -101,20 +169,19 @@
 	\pause \bigskip
 
 	We want to find
-	\begin{equation}
+	\begin{equation*}
 		\argmin_\beta \sum_i \ell(f(x_i), y_i)
-	\end{equation}
+	\end{equation*}
 	where $\ell$ is some "loss function".
 
 	\pause \bigskip
 
 	Ideas:
 
-	\begin{enumerate}
+	\begin{itemize}[<+->]
 		\item Least squares? ($\ell(a, b) = ||a - b||^2$)
 		\item Maximum likelihood estimation?
-	\end{enumerate}
-
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{Gradient Descent}
@@ -123,9 +190,9 @@
 		\bfseries
 		Chalkboard!
 
-		\begin{equation}
+		\begin{equation*}
 			\argmin_x f(x)
-		\end{equation}
+		\end{equation*}
 
 		\begin{align*}
 			f & : \R \to \R   \\
@@ -184,7 +251,7 @@
 	\end{center}
 
 	\medskip \pause
-	
+
 	% TODO: include this or not"
 	% \begin{equation*}
 	% 	\frac{\partial \ell}{\partial C}
@@ -200,6 +267,8 @@
 \begin{frame}[t]{Computational aside}
 
 	In practice, modern neural networks have much more complicated computational graphs
+
+	\pause
 
 	\only<+>{
 		\begin{center}
@@ -217,9 +286,13 @@
 
 	...updating parameters (i.e. computing gradients) takes a \textit{lot} of compute.
 
-	\note{Only recently that it's become computationally viable.}
+	\pause \smallskip
 
-	\note{People dedicate their lives to this sort of thing, this is just barely scratching the surface.}
+	\begin{itemize}
+		\item GPT 4 cost over \$100 million
+		      % altman: "it's more than that"
+		      % https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/
+	\end{itemize}
 \end{frame}
 
 \begin{frame}[t]{Evaluation}
@@ -266,7 +339,7 @@
 \end{frame}
 
 \begin{frame}{Recap}
-	\begin{itemize}
+	\begin{itemize}[<+->]
 		\item Neural nets $=$ matrix multiplication + non-linearity.
 		\item They can approximate pretty much any function.
 		\item We train them with backpropagation and gradient descent.

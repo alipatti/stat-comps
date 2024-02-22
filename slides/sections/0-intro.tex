@@ -2,9 +2,9 @@
 
 \begin{frame}{Statistics from 10,000 ft}
 
-	You have some outcome $y$ that you assume is related to a variable of interest $y$ by some process $f$:
+	You have some observation $x$ that you assume is related to a variable of interest $y$ by some process $f$:
 	\begin{equation}
-		y = f(x) + \epsilon_i.
+		y = f(x) + \epsilon.
 	\end{equation}
 
 	\pause \bigskip
@@ -18,7 +18,7 @@
 
 	\pause \bigskip
 
-	\textbf{Goal:} Estimate $f$ given some sets ${x_i}$ and ${y_i}$.
+	\textbf{Goal:} Estimate $f$ given some collections ${x_i}$ and ${y_i}$.
 
 	\begin{itemize}
 		\item Inference: how are $x$ and $y$ related?
@@ -26,9 +26,7 @@
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Interpretability v. Flexibility}
-
-	% TODO: put something better on top here
+\begin{frame}[t]{Interpretability v. Flexibility}
 
 	\textbf{Linear regression:}
 	\begin{itemize}
@@ -43,7 +41,7 @@
 		\item $f(x) = \sigma(Ax + b)$
 	\end{itemize}
 
-	\paus \bigskip
+	\pause \bigskip
 
 	\begin{center}
 		\tikz[every node/.style={align=center, font=\small}]{

@@ -3,7 +3,6 @@
 
 # python cache
 __pycache__/
-.venv
 
 # quarto cache/output directory
 /.quarto/
@@ -26,6 +25,7 @@ output
 *.toc
 *.vrb
 
+# raw data
 data/**/*.csv
 data/**/*.pt
 data/statsbomb-events.zip

@@ -1,3 +1,6 @@
+from itertools import pairwise
+from typing import Literal
+
 from torch import nn
 from torch.nn.utils.rnn import PackedSequence
 import torch
@@ -12,34 +15,71 @@ def pack_data_like(data: torch.Tensor, like: PackedSequence):
     )
 
 
-class SportSequenceModel(nn.Module):
-    D_seq: int  # dimension of event sequence
-    D_rnn: int  # dimension of RNN hidden state
-    N: int  # batch size
+class MLP(nn.Module):
+    """Multi-layer perceptron"""
 
-    def __init__(self, D_seq, D_rnn, multi_layer=False):
+    def __init__(
+        self,
+        layer_dimensions: list[int],
+        activation_function=nn.ReLU,
+    ):
         super().__init__()
 
-        self.rnn = nn.GRU(D_seq, D_rnn)
+        layers: list[nn.Module] = []
 
-        if multi_layer:
-            self.rnn_to_logit = nn.Sequential(
-                nn.Linear(D_rnn, D_rnn),
-                nn.ReLU(),
-                nn.Linear(D_rnn, 1),
-            )
-        else:
-            self.rnn_to_logit = nn.Linear(D_rnn, 1)
+        for d_in, d_out in pairwise(layer_dimensions):
+            layers.append(activation_function())
+            layers.append(nn.Linear(d_in, d_out))
 
-    def forward(self, packed_seqs: PackedSequence) -> PackedSequence:
-        """Takes list of sequences of dimension D_in and returns a list of sequences of dimension 1."""
+        self.mlp = nn.Sequential(*layers[1:])  # ignore the first non-linearity
 
-        packed_rnn_output, _ = self.rnn(packed_seqs)
+    def forward(self, x):
+        return self.mlp(x)
 
-        # apply dense layer to transform RNN output to a win-probability logit
-        packed_logits = pack_data_like(
-            data=self.rnn_to_logit(packed_rnn_output.data).reshape(-1),
-            like=packed_rnn_output,
+
+class SportSequenceModel(nn.Module):
+    def __init__(
+        self,
+        D_seq,
+        D_rnn=64,
+        bottom_hidden_layers=[],  # directly from events to RNN
+        top_hidden_layers=[],  # directly from RNN to probabilities
+        rnn_type: Literal["gru", "lstm", "rnn"] = "gru",
+        rnn_layers=1,
+    ):
+        super().__init__()
+
+        # module for mapping x_t into the RNN
+        self.top_mlp = MLP([D_seq] + top_hidden_layers + [D_rnn])
+
+        # the RNN itself
+        self.rnn = (
+            nn.GRU(D_rnn, D_rnn)
+            if rnn_type == "gru"
+            else nn.LSTM(D_rnn, D_rnn)
+            if rnn_type == "lstm"
+            else nn.RNN(D_rnn, D_rnn)
         )
 
-        return packed_logits
+        # module for taking hidden state to win probabilities
+        self.bottom_mlp = MLP([D_rnn] + bottom_hidden_layers + [1])
+
+    def forward(self, x: PackedSequence) -> PackedSequence:
+        """Takes a PackedSequences of dimension D_in (representing the game events) and returns a PackedSequence of dimension 1 (representing the logits of the win probabilties)."""
+
+        # send the events through the top MLP
+        x = pack_data_like(
+            data=self.top_mlp(x.data),
+            like=x,
+        )
+
+        # send the transformed events through the rnn
+        h, _ = self.rnn(x)
+
+        # send the hidden states through the bottom mlp to get probabilities
+        p = pack_data_like(
+            data=self.bottom_mlp(h.data).reshape(-1),
+            like=h,
+        )
+
+        return p

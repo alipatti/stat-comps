@@ -2,16 +2,16 @@
 
 \begin{frame}{Statistics from 10,000 ft}
 
-	You have some observation $x$ that you assume is related to a variable of interest $y$ by some process $f$:
-	\begin{equation}
+	You have some set of characteristics $x$ that you assume is related to a variable of interest $y$ by some process $f$:
+	\begin{equation*}
 		y = f(x) + \epsilon.
-	\end{equation}
+	\end{equation*}
 
 	\pause \bigskip
 
 	\textbf{Examples}
 
-	\begin{itemize}
+	\begin{itemize}[<+->]
 		\item ${x_i}$ are characteristics of a house, ${y_i} \in \R$ is its market price
 		\item ${x_i}$ are medical scans, ${y_i} \in \set{0, 1}$ is "does this patient have cancer"
 	\end{itemize}
@@ -20,7 +20,9 @@
 
 	\textbf{Goal:} Estimate $f$ given some collections ${x_i}$ and ${y_i}$.
 
-	\begin{itemize}
+	\pause
+
+	\begin{itemize}[<+->]
 		\item Inference: how are $x$ and $y$ related?
 		\item Prediction: given $x$, what's my best guess for $y$?
 	\end{itemize}

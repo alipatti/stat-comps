@@ -13,16 +13,7 @@
 		\smallskip
 	\end{definition}
 
-\end{frame}
-
-\begin{frame}{What even are they?}
-
-	In linear regression, we assume
-	\begin{equation*}
-		f(x) = Ax + b
-	\end{equation*}
-
-	What if we throw in a little non-linearity?
+	\pause \bigskip
 
 	\begin{center}
 		\includegraphics[width = .6 \textwidth]{salt-bae.jpg}
@@ -31,30 +22,35 @@
 \end{frame}
 
 \begin{frame}{Introducing non-linearity}
-	\textbf{The pieces:}
+
+	We want to estimate the relationship between $x \in \R^n$ and $y \in \R^m$.
+
+	\bigskip \pause
 
 	\begin{align*}
-		\onslide<+->{f : \R^n \to \R^k      & \qquad & f(x)      & = A x + b \\}
+		\onslide<2->{g : \R^n \to \R^k      & \qquad & g(x)      & = A x + b \\}
 		\smallskip
-		\onslide<+->{\sigma : \R^k \to \R^k &        & \sigma(x) & \frac{e^x}{1+e^x}\\}
+		\onslide<4->{\sigma : \R^k \to \R^k &        & \sigma(x) & = \frac{e^x}{1+e^x}\\}
 		\smallskip
-		\onslide<1->{g : \R^k \to \R_m      &        & g(x)      & = C x}
+		\onslide<3->{h : \R^k \to \R^m      &        & h(x)      & = C x}
 	\end{align*}
 
-	\pause
-
-	\textbf{All together:}
-
-	\begin{equation}
-		h = g \of \sigma \of f
-	\end{equation}
+	\bigskip
 
 	\begin{equation*}
 		\R^n
-		\ \underset{f}{\longrightarrow} \ \R^k
-		\ \underset{\sigma}{\longrightarrow} \  \R^k
-		\ \underset{g}{\longrightarrow} \ \R^m
+		\ \onslide<2->{\underset{g}{\longrightarrow} \ \R^k}
+		\ \onslide<4->{\underset{\sigma}{\longrightarrow} \ }
+		\ \onslide<3->{\R^k \underset{h}{\longrightarrow} \ \R^m}
 	\end{equation*}
+
+	\bigskip
+
+	\onslide<5->{
+		\begin{equation*}
+			\hat f = h \of \sigma \of g
+		\end{equation*}
+	}
 \end{frame}
 
 \begin{frame}{Why ``neural''?}
@@ -77,9 +73,9 @@
 	\bigskip \pause
 
 	\begin{center}
-		\begin{enumerate}
+		\begin{enumerate}[<+->]
 			\item Expressiveness
-			\item
+			\item Trainability
 		\end{enumerate}
 	\end{center}
 \end{frame}
@@ -89,7 +85,7 @@
 
 	For any continuous $f : K \subseteq \R^n \to \R^m$, there exists a sequence of functions
 	\begin{equation*}
-		h_i :
+		f_i :
 		\R^n
 		\ \xrightarrow{Ax + b} \ \R^k
 		\ \xrightarrow{\sigma(x)} \  \R^k
@@ -108,6 +104,8 @@
 
 \begin{frame}{Anything?}
 
+	\pause
+
 	\begin{center}
 		\tikz{
 			\node (image) {\includegraphics[height=1in]{mnist-3.png}};
@@ -118,6 +116,8 @@
 					\end{pmatrix} \in \R^{w \times h}$};
 			\draw[->] (image) -- (matrix);
 		}
+
+		\pause
 
 		\tikz{
 			\node (label) {$3$};
@@ -164,42 +164,40 @@
 
 \begin{frame}{Training}
 
-	Observations $x_i$, labels $y_i$, and a model $f_\beta(x_i)$.
+	Observations $x_i$, outcomes $y_i$, and a model $f_\beta(x_i)$.
 
 	\pause \bigskip
 
 	We want to find
 	\begin{equation*}
-		\argmin_\beta \sum_i \ell(f(x_i), y_i)
+		\argmin_\beta \sum_i \ell(f_\beta(x_i), y_i)
 	\end{equation*}
 	where $\ell$ is some "loss function".
 
-	\pause \bigskip
-
-	Ideas:
-
-	\begin{itemize}[<+->]
-		\item Least squares? ($\ell(a, b) = ||a - b||^2$)
-		\item Maximum likelihood estimation?
-	\end{itemize}
+	% \pause \bigskip
+	%
+	% Ideas:
+	%
+	% \begin{itemize}[<+->]
+	% 	\item Least squares? ($\ell(a, b) = ||a - b||^2$)
+	% 	\item Maximum likelihood estimation?
+	% \end{itemize}
 \end{frame}
 
 \begin{frame}{Gradient Descent}
 
 	\begin{center}
-		\bfseries
-		Chalkboard!
-
 		\begin{equation*}
-			\argmin_x f(x)
+			\argmin_\beta \sum_i \ell(f_\beta(x_i), y_i)
 		\end{equation*}
 
-		\begin{align*}
-			f & : \R \to \R   \\
-			f & : \R^2 \to \R \\
-			  & \quad \vdots  \\
-			f & : \R^n \to \R
-		\end{align*}
+		\pause \bigskip
+
+		\includegraphics[width=.4\textwidth]{gradient-descent.png}
+
+		\vspace{.5in} \pause
+
+		We can optimize our parameters by taking derivatives of the loss function.
 	\end{center}
 
 \end{frame}
@@ -212,15 +210,9 @@
 		\argmin_\beta \sum_i \ell(f(x), y)
 	\end{equation*}
 
-	\pause
-
-	\begin{equation*}
-		f(x) = C \sigma(Ax + b)
-	\end{equation*}
-
 	\bigskip \pause
 
-	\textbf{Computational graph of $f$:}
+	\textbf{Computational graph of multi-layer perceptron:}
 
 	\begin{center}
 		\begin{tikzpicture}[
@@ -250,7 +242,7 @@
 		\end{tikzpicture}
 	\end{center}
 
-	\medskip \pause
+	% \medskip \pause
 
 	% TODO: include this or not"
 	% \begin{equation*}
@@ -278,21 +270,21 @@
 		GPT 4 has $\sim 1$ trillion parameters ($\sim 4$ TB just to store them)
 	}
 
-	\pause \vspace{1in}
-
-	Gradient descent scales surprisingly well, but...
-
-	\pause \medskip
-
-	...updating parameters (i.e. computing gradients) takes a \textit{lot} of compute.
-
-	\pause \smallskip
-
-	\begin{itemize}
-		\item GPT 4 cost over \$100 million
-		      % altman: "it's more than that"
-		      % https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/
-	\end{itemize}
+	% \pause \vspace{1in}
+	%
+	% Gradient descent scales surprisingly well, but...
+	%
+	% \pause \medskip
+	%
+	% ...updating parameters (i.e. computing gradients) takes a \textit{lot} of compute.
+	%
+	% \pause \smallskip
+	%
+	% \begin{itemize}
+	% 	\item GPT 4 cost over \$100 million
+	% 	      % altman: "it's more than that"
+	% 	      % https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/
+	% \end{itemize}
 \end{frame}
 
 \begin{frame}[t]{Evaluation}
@@ -321,10 +313,10 @@
 
 	\medskip \pause
 
-	\begin{enumerate}
-		\item Split your data into "training" and "test" subsets.
+	\begin{enumerate}[<+->]
+		\item Split your data into "training" and "validation" subsets.
 		\item Train your model on \emph{only} the training data.
-		\item Evaluate your model's performance on the "test" data.
+		\item Evaluate your model's performance on the "validation" data.
 	\end{enumerate}
 \end{frame}
 
@@ -333,7 +325,7 @@
 	Is our model $\hat f_\beta$ a good approximation of the real process $f$?
 
 	\begin{center}
-		\includegraphics[width=.6\textwidth]{over-under-fitting.png}
+		\includegraphics[width=.75\textwidth]{over-under-fitting.png}
 	\end{center}
 
 \end{frame}

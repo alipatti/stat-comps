@@ -1,8 +1,8 @@
-\section{Application to Sports}
+\section{Application to Basketball}
 
 \begin{frame}{The data}
 
-	\textbf{Basketball game play-by-play data}
+	\textbf{NBA play-by-play data}
 
 	\medskip
 
@@ -15,7 +15,15 @@
 
 \begin{frame}{Sequence modeling}
 
-	How do we get this into a format that we can feed into a neural network?
+	\begin{itemize}[<+->]
+		\item Encode each game event as a vector $x_t \in \R^{n}$.
+		\item Each game is a sequence $x_1, \ldots, x_T$.
+		      \medskip
+		\item Labels are $y_i = \begin{cases}
+				      1 & \text{if the home team wins} \\
+				      0 & \text{if the away team wins}
+			      \end{cases}$
+	\end{itemize}
 
 	\pause
 
@@ -58,9 +66,9 @@
 
 			\node[below = of rnn] (at) {$h_t$};
 
-			\node[right = of rnn] (ht) {$h_t$};
+			% \node[right = of rnn] (ht) {$h_t$};
 
-			\draw (rnn) -- (ht);
+			% \draw (rnn) -- (ht);
 			\draw (rnn) -- (at);
 
 			\pause
@@ -71,7 +79,7 @@
 	\end{center}
 \end{frame}
 
-\begin{frame}[t]{RNNs (cont.)}
+\begin{frame}[t]{Recurrent Neural Networks}
 
 	\begin{itemize}
 		\item $x_t$: event at time $t$
@@ -146,6 +154,8 @@
 			      \item different models for computing $p_t$ from $h_t$
 			      \item different forms of RNNs (LSTM, GRU)
 		      \end{itemize}
+
+		\item Picked the one that had the best cross-validated accuracy.
 	\end{itemize}
 \end{frame}
 

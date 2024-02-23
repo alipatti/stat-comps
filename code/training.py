@@ -267,14 +267,35 @@ def train(
             print(f" - Saved checkpoint to {path}")
 
 
-if __name__ == "__main__":
-    # --- SOCCER MODELS ---
+def main_nba():
+    EPOCHS = 30
+    nba_data = SportSequenceDataset(NBA_TENSOR_PATH)
+    d_seq = nba_data[0][0].shape[1]  # dimension of event representations
 
+    param_list: list[dict] = [
+        dict(
+            D_rnn=64,
+            bottom_hidden_layers=[64],
+            top_hidden_layers=[64],
+            rnn_layers=2,
+        ),
+    ]
+
+    for params in param_list:
+        train(
+            SportSequenceModel(d_seq, **params),
+            nba_data,
+            checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
+            epochs=EPOCHS,
+        )
+
+
+def main_soccer():
     statsbomb_data = SportSequenceDataset(STATSBOMB_TENSOR_PATH)
-    D_seq_statsbomb = statsbomb_data[0][0].shape[1]  # dimension of event representations
+    d_seq = statsbomb_data[0][0].shape[1]
 
     train(
-        SportSequenceModel(D_seq_statsbomb, D_rnn=64, multi_layer=True),
+        SportSequenceModel(d_seq, D_rnn=64),
         statsbomb_data,
         checkpoint_path=Path("../checkpoints/statsbomb/64-hidden-multilayer/"),
         epochs=1,
@@ -282,25 +303,6 @@ if __name__ == "__main__":
         batch_size=10,
     )
 
-    # --- BASEKTBALL MODELS ---
 
-    nba_data = SportSequenceDataset(NBA_TENSOR_PATH)
-    D_seq_nba = nba_data[0][0].shape[1]  # dimension of event representations
-
-    train(
-        SportSequenceModel(D_seq_nba, D_rnn=32),
-        nba_data,
-        checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
-    )
-
-    train(
-        SportSequenceModel(D_seq_nba, D_rnn=64),
-        nba_data,
-        checkpoint_path=Path("../checkpoints/nba/64-hidden/"),
-    )
-
-    train(
-        SportSequenceModel(D_seq_nba, D_rnn=128),
-        nba_data,
-        checkpoint_path=Path("../checkpoints/nba/128-hidden/"),
-    )
+if __name__ == "__main__":
+    main_nba()

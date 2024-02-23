@@ -282,10 +282,12 @@ def main_nba():
     ]
 
     for params in param_list:
+        model = SportSequenceModel(d_seq, **params)
+        model_string = "-".join(f"{k}-{v}" for k, v in params.items())
         train(
-            SportSequenceModel(d_seq, **params),
+            model,
             nba_data,
-            checkpoint_path=Path("../checkpoints/nba/32-hidden/"),
+            checkpoint_path=Path(f"../checkpoints/nba/{model_string}/"),
             epochs=EPOCHS,
         )
 

@@ -32,12 +32,11 @@ class SportSequenceDataset(Dataset):
     def __getitem__(self, i) -> tuple[torch.Tensor, torch.Tensor]:
         path = self.paths[i]
         seq = torch.load(path)
-        outcome = str(path).split("_", maxsplit=1)[1]
         labels = (
             torch.ones(seq.size(0))
-            if outcome == "home_win"
+            if "home_win" in path
             else torch.zeros(seq.size(0))
-            if outcome == "away_win"
+            if "away_win" in path
             else 0.5 * torch.ones(seq.size(0))  # draw
         )
 

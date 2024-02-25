@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, Literal
 import json
 
 import torch
@@ -267,42 +267,40 @@ def train(
 
 
 def main_nba():
-    EPOCHS = 30
+    EPOCHS = 20  # things seem to converge by this point
+
     nba_data = SportSequenceDataset(NBA_TENSOR_PATH)
     d_seq = nba_data[0][0].shape[1]  # dimension of event representations
 
-    param_list: list[dict] = [
-        dict(
-            D_rnn=64,
-            bottom_hidden_layers=[64],
-            top_hidden_layers=[64],
-            rnn_layers=2,
-        ),
-    ]
+    model_sizes: dict[str, tuple[int, list[int], int]] = {
+        "xs": (32, [], 1),
+        "sm": (64, [64], 1),
+        "md": (128, [128], 1),
+        "lg": (128, [128], 2),
+        "xl": (128, [128, 128], 4),
+    }
 
-    for params in param_list:
-        model = SportSequenceModel(d_seq, **params)
-        model_string = "-".join(f"{k}-{v}" for k, v in params.items())
-        train(
-            model,
-            nba_data,
-            checkpoint_path=Path(f"../checkpoints/nba/{model_string}/"),
-            epochs=EPOCHS,
-        )
+    rnn_types = ["lstm", "gru", "rnn"]
 
+    for size, (D_rnn, hidden_layers, rnn_layers) in model_sizes.items():
+        for rnn_type in rnn_types:
+            model = SportSequenceModel(
+                d_seq,
+                rnn_type=rnn_type,  # type: ignore
+                D_rnn=D_rnn,
+                bottom_hidden_layers=hidden_layers,
+                top_hidden_layers=hidden_layers,
+                rnn_layers=rnn_layers,
+            )
 
-def main_soccer():
-    statsbomb_data = SportSequenceDataset(STATSBOMB_TENSOR_PATH)
-    d_seq = statsbomb_data[0][0].shape[1]
+            model_name = f"{rnn_type}-{size}"
 
-    train(
-        SportSequenceModel(d_seq, D_rnn=64),
-        statsbomb_data,
-        checkpoint_path=Path("../checkpoints/statsbomb/64-hidden-multilayer/"),
-        epochs=1,
-        checkpoint_every=1,
-        batch_size=10,
-    )
+            train(
+                model,
+                nba_data,
+                checkpoint_path=Path(f"../checkpoints/nba/{model_name}/"),
+                epochs=EPOCHS,
+            )
 
 
 if __name__ == "__main__":

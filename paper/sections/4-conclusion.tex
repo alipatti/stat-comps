@@ -1,23 +1,48 @@
 \section{Conclusion}
 
-we modeled sports as sequences with the hope of being able
-
-they did learn to predict winners, but were unable to outpreform the naive method of picking the currently-winning team.
+In this paper, we modeled NBA basketball games as sequence of events (e.g. shots, fouls, rebounds) with the hope of creating a model that was able to predict the winner of a game while the game was in progress. Our models did learn to predict winners with 73 percent accuracy, but they were unable to outperform the naive method of predicting the winner to be the team currently in the lead. To close, we discuss a few reasons why our model may have under performed and outline several directions for future work.
 
 \subsection{Reasons for under-performance}
 
-lots of scoring in basketball, maybe score just is the best predictor of the winner
+\subsubsection{Score accurately captures game dynamics}
+
+lots of scoring in basketball, maybe score may simply just is the best predictor of the winner
 
 there are a few reasons why this may be the case
 
+\subsubsection{The vanishing/exploding gradient problem}
+
+model can't backprop
+
+when doing backpropogation
+
+The LSTM and gated recurrent units attempt to solve this issue, but they only put a band-aid on what is really a fundamental problem of the recurrent model architecture. In recent years, the transformer architecture \cite{attention-is-all-you-need} has taken the natural-language-processing and machine learning world by storm because of its non-recurrent way of modeling sequential data.
+
 \subsection{Future work}
 
-different sports
+\subsubsection{A different loss function}
+
+Currently, we penalize being wrong about the game outcome the same regardless of when the event takes place in the game. this is easy to implement and makes sense within the framework of binary classification, but
+
+We care a lot more about our model being correct towards the end of the game. We doubt that this is the source of our model's performance issues, but it's something worth considering in the future.
+
+\subsubsection{Different sports}
 
 there's less scoring in soccer and hockey
 
 if we think of chances as random events, when you sum them all up, you end up with a lower-variance estimate of the mean in basketball than you would in soccer and hockey
 
-more data
+Comprehensive play-by-play data for several thousand soccer games is available at \cite{statsbomb-open-data}, and preliminary cleaning and modeling work can be found in the \texttt{code} directory at \cite{stat-comps-github}.
 
-different model (transformer in particular)
+\subsubsection{A different model}
+
+(transformer in particular)
+
+\subsubsection{More data}
+
+we currently top out in 2021 (that's when our data set ends)
+
+could be worth trying to get both more recent and older games, espesially with the transformer model which famously needs a lot of data to produce meaningful results.
+
+the play-by-play scraping script [citation needed] could easily be used for this purpose.
+

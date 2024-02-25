@@ -11,7 +11,7 @@ We clean and aggregate the data. One-hot encode columns corresponding to game ev
 
 For example, col for jump shot, hook shot, dunk current score for each team, time left, etc.
 
-Full list of columns given in \autoref{fig:list-of-columns}.
+Full list of columns given in \autoref{tbl:list-of-columns}.
 
 This data is fed into the neural network described in the next section.
 
@@ -20,17 +20,37 @@ This data is fed into the neural network described in the next section.
 	\caption{Example play-by-play data as seen on BasetballReference.com.}
 \end{figure}
 
-\begin{figure}
+\begin{table}
 	% TODO: make this table
 	\caption{The full list of the 69 columns in our data set.}
+	\label{tbl:list-of-columns}
+\end{table}
+
+\begin{table}
+	\centering
+	\begin{tabular}{rl}
+		\hline
+		Event Type  & $n$     \\
+		\hline
+		Total       & 3040524 \\
+		Shots       & 1144001 \\
+		Rebounds    & 690893  \\
+		Free Throws & 302084  \\
+		Fouls       & 275409  \\
+		Jumpballs   & 275409  \\
+		Turnovers   & 187496  \\
+		Violations  & 10884   \\
+		\hline
+	\end{tabular}
+	\caption{Number of events by event type.}
+\end{table}
+
+\begin{figure}[h]
+	\input{figures/game_length_hist.tikz}
+	\caption{The distribution of number of events per game with the mean (461) shown in red.}
 \end{figure}
 
-\begin{figure}
-	% TODO: make histogram 
-	\caption{Histogram of the number of events per game.}
-\end{figure}
-
-\begin{figure}
-	% TODO: make bar chart and/or table
-	\caption{Number of events per event type.}
+\begin{figure}[h]
+	\input{figures/events_by_time.tikz}
+	\caption{The distribution of events as a function of the time left in the quarter. The highest event density (expectedly) occurs at the end of the fourth quarter.}
 \end{figure}

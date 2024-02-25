@@ -1,0 +1,87 @@
+\documentclass[titlepage]{article}
+
+\title{\scshape
+	Sports as Sequences \\[1em]
+	\large Win Prediction with Deep Learning
+}
+\author{Alistair Pattison \\ {\small Carleton College Statistics Department}}
+\date{February 2024}
+
+% personal macros (from github.com/alipatti/dotfiles)
+\usepackage{ali-macros}
+\usepackage{ali-lists, ali-theorems}
+
+% references
+\usepackage{biblatex}
+\usepackage[linkcolor=black, colorlinks]{hyperref}
+\addbibresource{../references.bib}
+
+% float positioning
+\usepackage{floatrow}
+\floatplacement{figure}{t}
+\floatplacement{table}{t}
+
+% spacing
+\usepackage{parskip}
+\usepackage[margin=1in]{geometry}
+
+% headers
+\usepackage{fancyhdr}
+\lhead{\scshape Sports as Sequences}
+\rhead{\scshape Pattison \thepage}
+\cfoot{} % get rid of the page number 
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\makeatother
+
+% table formatting
+\usepackage{array}
+\def\arraystretch{1.4}
+
+% diagrams
+\usepackage{tikz}
+\usetikzlibrary{chains, graphs, positioning, quotes, graphdrawing, arrows, graphs.standard}
+\usegdlibrary{layered}
+\tikzset{
+	node distance = 2.5em,
+	arrow/.append style = {->,
+		shorten > = 2pt,
+		shorten < = 2pt},
+	box/.append style = {
+		draw,
+		rounded corners = 2pt,
+		align = center,
+		inner sep = 4pt,
+	}
+}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+	% TODO: write abstract
+\end{abstract}
+
+\tableofcontents
+\thispagestyle{empty}
+
+\newpage
+
+\pagestyle{fancy}
+\setcounter{page}{1}
+
+\input{sections/0-intro.tex}
+\input{sections/1-data.tex}
+\input{sections/2-methods.tex}
+\input{sections/3-results.tex}
+\input{sections/4-conclusion.tex}
+\input{sections/5-appendix.tex}
+
+\clearpage
+
+\printbibliography
+
+\end{document}

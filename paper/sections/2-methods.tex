@@ -1,0 +1,79 @@
+\section{Methods}
+
+\subsection{Support Vector Machines}
+
+\subsection{Neural Networks}
+
+\subsection{The Multi-layer Perceptron}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\graph[layered layout, grow=right, level sep=4em, sibling sep=2em, edges={->}]{
+		subgraph I_n [n = 4, name=input] -- [complete bipartite]
+		subgraph I_n [n = 6, name=hidden] -- [complete bipartite]
+		subgraph I_n [n = 3, name=output]
+		};
+	\end{tikzpicture}
+	\caption{The multi-layer perceptron.  We first map our input into a ``hidden layer'' via a linear linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space.}
+\end{figure}
+
+\subsection{Recurrent Neural Networks}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[
+			node distance = 1.5em and 3.5em,
+			->,
+			module/.style={ draw, rounded corners,
+					inner sep=10pt, outer sep=5pt},
+			every edge quotes/.style={fill=white, font=\small},
+		]
+
+		\node[module] (rnn1) {RNN};
+		\node[module, right = of rnn1] (rnn2) {RNN};
+		\node[module, right = of rnn2] (rnn3) {RNN};
+		\node[right = of rnn3] (rnn4) {$\cdots$};
+
+		\node[module, above = of rnn1] (mlpt1) {MLP\textsubscript{top}};
+		\node[module, above = of rnn2] (mlpt2) {MLP\textsubscript{top}};
+		\node[module, above = of rnn3] (mlpt3) {MLP\textsubscript{top}};
+
+		\node[left = of rnn1] (h0) {$h_0$};
+
+		\node[above = of mlpt1] (x1) {$x_1$};
+		\node[above = of mlpt2] (x2) {$x_2$};
+		\node[above = of mlpt3] (x3) {$x_3$};
+
+		\node[module, below = 1cm of rnn1] (mlpb1) {MLP\textsubscript{bot}};
+		\node[module, below = 1cm of rnn2] (mlpb2) {MLP\textsubscript{bot}};
+		\node[module, below = 1cm of rnn3] (mlpb3) {MLP\textsubscript{bot}};
+
+		\node[below = of mlpb1] (p1) {$p_1$};
+		\node[below = of mlpb2] (p2) {$p_2$};
+		\node[below = of mlpb3] (p3) {$p_3$};
+
+		\draw (h0) -- (rnn1);
+		\draw (rnn1) edge["$h_1$"] (rnn2);
+		\draw (rnn2) edge["$h_2$"] (rnn3);
+		\draw (rnn3) edge["$h_3$"] (rnn4);
+
+		\draw (x1) -- (mlpt1);
+		\draw (x2) -- (mlpt2);
+		\draw (x3) -- (mlpt3);
+
+		\draw (mlpt1) -- (rnn1);
+		\draw (mlpt2) -- (rnn2);
+		\draw (mlpt3) -- (rnn3);
+
+		\draw (rnn1) edge["$h_1$"] (mlpb1);
+		\draw (rnn2) edge["$h_2$"] (mlpb2);
+		\draw (rnn3) edge["$h_3$"] (mlpb3);
+
+		\draw (mlpb1) -- (p1);
+		\draw (mlpb2) -- (p2);
+		\draw (mlpb3) -- (p3);
+	\end{tikzpicture}
+
+	\caption{Our network architecture.}
+\end{figure}

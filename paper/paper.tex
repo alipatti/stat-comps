@@ -21,6 +21,8 @@
 \floatplacement{figure}{t}
 \floatplacement{table}{t}
 
+\usepackage{array}
+
 % spacing
 \usepackage{parskip}
 \usepackage[margin=1in]{geometry}
@@ -40,7 +42,7 @@
 
 % diagrams
 \usepackage{tikz}
-\usetikzlibrary{chains, graphs, positioning, quotes, graphdrawing, arrows, graphs.standard}
+\usetikzlibrary{chains, graphs, positioning, quotes, graphdrawing, arrows, graphs.standard, matrix}
 \usegdlibrary{layered}
 \tikzset{
 	node distance = 2.5em,
@@ -81,6 +83,8 @@
 \input{sections/5-appendix.tex}
 
 \clearpage
+
+\nocite{ISL, ESL}
 
 \printbibliography
 

@@ -1,24 +1,221 @@
 \section{Methods}
 
+At each time step, we output a probability $p_t$ that the home team will win the game.
+
 \subsection{Support Vector Machines}
+
+% TODO: is it even worth describing this?
+
+computes 'max separating hyperplane' in data
+
+done by solving the following quadratic optimization problem
+\begin{equation}
+	% TODO: 
+\end{equation}
+
+not used in our work because it can't model sequence data
+
+can model non-linear boundaries via basis expansion and mapping the input into a higher-dimensional space via a non-linear transformation. we comput the best linear boundary in this space and then map back down into the original space. this is like how in cubic regression we map do a basis expansion  $\R^1 \to \R^3$ by sending $(x) \mapsto (1, x, x^2, x^3)$. We then do linear regression with respect to this higher-dimensional representation of our data.
+
+this can be made efficient via the ``kernel trick''
 
 \subsection{Neural Networks}
 
+hard to define exactly what a neural network is
+
+they define a broad class of model characterized by the composition of linear and non-linear functions
+
+they are trained via the backpropagation algorithm and gradient descent
+
+we define the a basic version here called the multilayer perceptron
+
+convlutional, gan, transformer
+
 \subsection{The Multi-layer Perceptron}
+
+linear transformation + non-linear transformation + linear transformation
+
+first conceived in ?? by ???
+
+universal function approximators
 
 \begin{figure}
 	\centering
 	\begin{tikzpicture}
-		\graph[layered layout, grow=right, level sep=4em, sibling sep=2em, edges={->}]{
-		subgraph I_n [n = 4, name=input] -- [complete bipartite]
-		subgraph I_n [n = 6, name=hidden] -- [complete bipartite]
-		subgraph I_n [n = 3, name=output]
+		\graph[
+		math nodes,
+		layered layout, grow=right, level sep=6em, sibling sep=3em,
+		edges={->, gray}, nodes={inner sep = 1em}
+		]{
+		subgraph I_n [V={x_3, x_2, x_1}, name=input] -- [complete bipartite]
+		subgraph I_n [V={z_4, z_3, z_2, z_1}, name=hidden] (hidden) -- [complete bipartite]
+		subgraph I_n [V={y_2, y_1}, name=output]
 		};
+
+		\node[above = 1em of hidden z_1] (hidden label) {\underline{Hidden layer}};
+		\node[left = of hidden label] {\underline{Input layer}};
+		\node[right = of hidden label] {\underline{Output layer}};
 	\end{tikzpicture}
-	\caption{The multi-layer perceptron.  We first map our input into a ``hidden layer'' via a linear linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space.}
+
+	\caption{A multi-layer perceptron with $n = 3$, $k = 4$, and $m = 2$.  We first map our input into a ``hidden layer'' via a linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space. Mathematically, each ``neuron'' in the hidden layer takes on the value $z_i = \sigma(w_{z1} x_1 + \cdots + w_{zn} x_n + b_{i})$ and the ``neurons'' in the output layer take the values $y_i = w_{y1} z_1 + \cdots + w_{yk} z_k$. The ``weights'' $\set{x_{ij}}$ and ``biases'' $\set{b_{i}}$ are the model parameters.}
 \end{figure}
 
+\subsection{Estimating Network Parameters}
+
+We want to find the parameters $\beta$ that minimize
+\begin{equation*}
+	\argmin_\beta \sum_i \ell(f_\beta(x_i), y_i)
+\end{equation*}
+where $\ell$ is some ``loss function''.
+
+loss function is context dependent
+
+in linear regression, we usually use mean squared error
+
+in binary classification, we use something called binary cross-entropy loss. it turns out that minimizing this loss function gives a maximum liklihood solution to $\beta$
+
+unlike in linear regression, we can't use calculus to derive a nice formula for the parameter values.
+
+we have to turn to a more computationally-expensive
+
+through a clever application of the chain rule known as backpropogation
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[
+			every edge quotes/.style = {below, font=\small}
+		]
+		\matrix [
+		matrix of math nodes,
+		column sep=3em,
+		row sep=3em,
+		nodes={anchor=center},
+		] {
+		& |(A)|A        & |(b)| b &              & |(C)| C       & |(y)| y    &         \\
+		|(x)| x & |(t1)| \times & |(p)| + & |(s)| \sigma & |(t2)| \times & |(l)| \ell & |(L)| {\text{loss}} \\
+		};
+
+		\draw[->] (x) -- (t1);
+		\draw[->] (t1) edge["$x_1$"] (p);
+		\draw[->] (p) edge["$x_2$"] (s);
+		\draw[->] (s) edge["$x_3$"] (t2);
+		\draw[->] (t2) edge["$x_4$"] (l);
+		\draw[->] (l) -- (L);
+
+		\draw[->] (A) -- (t1);
+		\draw[->] (b) -- (p);
+		\draw[->] (C) -- (t2);
+		\draw[->] (y) -- (l);
+	\end{tikzpicture}
+	\caption{The computational graph for the multilayer perceptron.}
+\end{figure}
+
+we track intermediate states
+\begin{equation}
+	\begin{aligned}
+		x_1 & = Ax                          \\
+		x_2 & = Ax  + b                     \\
+		x_3 & = \sigma(Ax  + b)             \\
+		x_4 & = f(x) = C \, \sigma(Ax  + b)
+	\end{aligned}
+\end{equation}
+
+By tracking intermediate states in this way, we can use the chain rule to compute the derivative of the loss with respect to $C$:
+\begin{equation*}
+	\frac{\partial \ell}{\partial C}
+	= \frac{\partial \ell}{\partial x_4}
+	\frac{\partial x_4}{\partial C}.
+\end{equation*}
+
+Derivatives with respect to the other two parameter groups follow from the same process, only we know must traverse further back through the computational graph:
+\begin{equation*}
+	\frac{\partial \ell}{\partial b}
+	= \frac{\partial \ell}{\partial x_4}
+	\frac{\partial x_4}{\partial x_3}
+	\frac{\partial x_3}{\partial x_2}
+	\frac{\partial x_2}{\partial b},
+\end{equation*}
+\begin{equation*}
+	\frac{\partial \ell}{\partial A}
+	= \frac{\partial \ell}{\partial x_4}
+	\frac{\partial x_4}{\partial x_3}
+	\frac{\partial x_3}{\partial x_2}
+	\frac{\partial x_2}{\partial x_1}
+	\frac{\partial x_1}{\partial A}.
+\end{equation*}
+
+We then update our original guesses
+\begin{equation}
+	\begin{aligned}
+		A' & = A - \gamma \frac{\partial \ell}{\partial A} \\
+		b' & = b - \gamma \frac{\partial \ell}{\partial b} \\
+		C' & = C - \gamma \frac{\partial \ell}{\partial C}
+	\end{aligned}
+\end{equation}
+By interating
+
+In theory, one can get stuck in local minima,
+
+% TODO: citation for this
+in pracitce, this tends not to happen [].
+
+In practice, this process of computing gradients is done automatically by a software library
+
 \subsection{Recurrent Neural Networks}
+
+Until now, we haven't discussed how to model sequences with neural networks.
+
+In the context of our data set, the win probability at time $t$ depends on much more than just the event that took place at time $t$.
+
+to allow past events to influence predictions at the current time step, we maintain an internal hidden state $h_t$ that attempts to capture the state of the sequence at time $t$.
+
+we continually update this hidden state with elements from our sequence via a mechanism called a recurrent neural network \autoref{fig:simple-rnn}. It is from these hidden states $h_t$ that we make our win probability predictions in our full model \autoref{fig:full-model}.
+
+The RNN internals are similar to the multilayer perceptron: we update the hidden state via the equation
+\begin{equation}
+	h_t = \sigma(A x_t + Bh_{t-1} + c)
+\end{equation}
+where $\sigma$ is some non-linear function---we use the hyperbolic tangent because that is the default option in the \texttt{pytorch} package we use to implement our model. This is known as the Elman model of an RNN.
+
+We also use two other forms of recurrent neural networks known as Gated Recurrent Units and Long Short Term Memory. These employ more complex internal logic that allow gradients to ``flow'' backwards more cleanly and enables events further in the past to have influence on the current output of the sequence. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite{PML}, chapter ?? for a complete exposition.
+
+In our complete model, we first pass the events through a multi-layer perceptron.
+
+We also experiment with ``stacking'' RNN layers. In this scenario, the hidden states of first RNN layer serve as the input sequence for the second layer. We make our predictions from the second layer's hidden states.
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[
+			node distance = 1.5em and 4em,
+			->,
+			module/.style={ draw, rounded corners,
+					inner sep=10pt, outer sep=5pt},
+			every edge quotes/.style={fill=white, font=\small},
+		]
+
+		\node[module] (rnn1) {RNN};
+		\node[module, right = of rnn1] (rnn2) {RNN};
+		\node[module, right = of rnn2] (rnn3) {RNN};
+
+		\node[left = of rnn1] (h0) {};
+		\node[right = of rnn3] (h1) {};
+
+		\node[above = of rnn1] (x1) {$x_t$};
+		\node[above = of rnn2] (x2) {$x_{t+1}$};
+		\node[above = of rnn3] (x3) {$x_{t+2}$};
+
+		\draw[->] (x1) -- (rnn1);
+		\draw[->] (x2) -- (rnn2);
+		\draw[->] (x3) -- (rnn3);
+		\draw[->] (h0) edge["$h_{t-1}$"] (rnn1);
+		\draw[->] (rnn1) edge["$h_t$"] (rnn2);
+		\draw[->] (rnn2) edge["$h_{t+1}$"] (rnn3);
+		\draw[->] (rnn3) edge["$h_{t+2}$"] (h1);
+	\end{tikzpicture}
+
+	\caption{A simple recurrent neural network.}
+	\label{fig:simple-rnn}
+\end{figure}
 
 \begin{figure}
 	\centering
@@ -75,5 +272,6 @@
 		\draw (mlpb3) -- (p3);
 	\end{tikzpicture}
 
-	\caption{Our network architecture.}
+	\caption{Our network architecture. The raw event data is first fed into a multilayer perceptron, then passed into the recurrent layer to generate the hidden game state $h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. We experiment with several different options for the two multilayer perceptrons and the recurrent component.}
+	\label{fig:full-model}
 \end{figure}

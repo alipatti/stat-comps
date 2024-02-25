@@ -1,1 +1,49 @@
 \section{Results}
+
+We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library. Code and instructions for reproducitng these results are available on github [TODO: citation].
+
+We use the binary cross-entropy loss function where each output $p_t$ is compared to the true outcome of the game
+\begin{equation}
+	y_i = \begin{cases}
+		1 & \text{if the home team wins}  \\
+		0 & \text{if the away team wins}.
+	\end{cases}
+\end{equation}
+TO measure the performance of our model, we
+
+Because there is no notion of a ``positive'' and ``negative'' label in our classification problem, we do not evaluate the models' precisions.
+
+We tested both the GRU and LSTM recurrent modules in a variety of different configurations ranging from quite simpile (no hidden MLP layers, no RNN stacking) to quite complex (many hidden layers, with RNN stacking). The exact configurations and their performance are given in \autoref{tab:model-results}.
+
+\begin{table}
+	\begin{tabular}{ccccc | cccc}
+		\multicolumn{3}{c}{\underline{RNN configuration}} & \multicolumn{2}{c|}{\underline{Hidden layers}} & \multicolumn{2}{c}{\underline{Training}} & \multicolumn{2}{c}{\underline{Validation}}                                                              \\
+		Type                                              & Stacking                                       & $h_t$ dimension                          & MLP\textsubscript{top}                     & MLP\textsubscript{bot} & Loss & Accuracy & Loss & Accuracy \\
+		\hline
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		\\
+		% TODO: fill this in
+	\end{tabular}
+	\caption{The performance of our various models, arranged with the least complex models at the top and the most complex at the bottom.}
+	\label{tab:model-results}
+\end{table}
+
+These results are encouraging at first, but quickly become less so when faced with the fact that the simple classificer that predicts the t
+
+% TODO: shapley values
+
+% TODO: validation plots?

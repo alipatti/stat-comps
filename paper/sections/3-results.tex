@@ -1,49 +1,57 @@
 \section{Results}
 
-We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library. Code and instructions for reproducitng these results are available on github [TODO: citation].
-
-We use the binary cross-entropy loss function where each output $p_t$ is compared to the true outcome of the game
+We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library \cite{pytorch}. Code and instructions for reproducing these results are available on GitHub \cite{stat-comps-github}. To train our model, we use the binary cross-entropy loss function where each output $p_t$ is compared to the true outcome of the game
 \begin{equation}
-	y_i = \begin{cases}
+	y = \begin{cases}
 		1 & \text{if the home team wins}  \\
 		0 & \text{if the away team wins}.
 	\end{cases}
 \end{equation}
-TO measure the performance of our model, we
+We fit our models using gradient descent via backpropogation with respect to this loss function.
 
-Because there is no notion of a ``positive'' and ``negative'' label in our classification problem, we do not evaluate the models' precisions.
+To measure our model's performance, we use what is known as \emph{cross-validation}, a model evaluation technique in which we measure model fitness based on how well it performs on data that was not used during the training phase.
+More precisely, we split our data into two subsets known as the \emph{training} and \emph{validation} (or \emph{test}) subsets---typically one uses an 80-20 percent split. We fit our model only on the training subset and then measure its performance on the validation subset. If the training performance exceeds the validation performance by a significant margin, we say that our model has \emph{overfit}, i.e., learned patterns that are in the training data by chance and are not indicative of a real relationship.
 
-We tested both the GRU and LSTM recurrent modules in a variety of different configurations ranging from quite simpile (no hidden MLP layers, no RNN stacking) to quite complex (many hidden layers, with RNN stacking). The exact configurations and their performance are given in \autoref{tab:model-results}.
+The results of our model training are given in \autoref{tbl:model-results}. The training/validation curves (performance as a function of training time) for each model are shown in \autoref{fig:training-curves}.
 
 \begin{table}
-	\begin{tabular}{ccccc | cccc}
-		\multicolumn{3}{c}{\underline{RNN configuration}} & \multicolumn{2}{c|}{\underline{Hidden layers}} & \multicolumn{2}{c}{\underline{Training}} & \multicolumn{2}{c}{\underline{Validation}}                                                              \\
-		Type                                              & Stacking                                       & $h_t$ dimension                          & MLP\textsubscript{top}                     & MLP\textsubscript{bot} & Loss & Accuracy & Loss & Accuracy \\
+	\begin{tabular}{r l  ccccc}
+		         &      &       & \multicolumn{2}{c}{\underline{Training}} & \multicolumn{2}{c}{\underline{Validation}}                     \\
+		RNN type & Size & Epoch & Loss                                     & Accuracy                                   & Loss   & Accuracy \\
 		\hline
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		\\
-		% TODO: fill this in
+		GRU      & xs   & 20    & 0.5046                                   & 0.7394                                     & 0.5112 & 0.7373   \\
+		         & sm   & 16    & 0.4998                                   & 0.7383                                     & 0.5073 & 0.7385   \\
+		         & md   & 17    & 0.4938                                   & 0.7400                                     & 0.5013 & 0.7378   \\
+		         & lg   & 20    & 0.4880                                   & 0.7431                                     & 0.5013 & 0.7397   \\
+		         & xl   & 10    & 0.5053                                   & 0.7378                                     & 0.5089 & 0.7381   \\
+		\hline
+		LSTM     & xs   & 14    & 0.5066                                   & 0.7410                                     & 0.5179 & 0.7363   \\
+		         & sm   & 17    & 0.4995                                   & 0.7386                                     & 0.5052 & 0.7377   \\
+		         & md   & 20    & 0.4914                                   & 0.7430                                     & 0.5006 & 0.7388   \\
+		         & lg   & 15    & 0.4964                                   & 0.7406                                     & 0.5048 & 0.7378   \\
+		         & xl   & 20    & 0.5034                                   & 0.7351                                     & 0.5035 & 0.7380   \\
+		\hline
+		Elman    & xs   & 16    & 0.5153                                   & 0.7382                                     & 0.5166 & 0.7382   \\
+		         & sm   & 20    & 0.4973                                   & 0.7382                                     & 0.5000 & 0.7393   \\
+		         & md   & 19    & 0.4942                                   & 0.7419                                     & 0.4970 & 0.7402   \\
+		         & lg   & 12    & 0.4961                                   & 0.7415                                     & 0.5017 & 0.7395   \\
+		         & xl   & 13    & 0.4984                                   & 0.7392                                     & 0.5109 & 0.7385   \\
+		\hline
 	\end{tabular}
-	\caption{The performance of our various models, arranged with the least complex models at the top and the most complex at the bottom.}
-	\label{tab:model-results}
+	\caption{The performance of our various models, taken at the epoch (round of training) in which validation accuracy is maximized. Because there is no notion of a ``positive'' and ``negative'' label in our classification problem, we do not evaluate our models' precision.}
+	\label{tbl:model-results}
 \end{table}
 
-These results are encouraging at first, but quickly become less so when faced with the fact that the simple classificer that predicts the t
+At first, these results are quite encouraging: Every model achieves a validation accuracy of at least 73 percent, and the complex models do not seem to provide any meaningful boost in performance. However, the larger models do appear to converge more quickly (\autoref{fig:training-curves}). No model appears to suffer from overfitting.
 
-% TODO: shapley values
+However, the fanfare fades when we realize that the simple classifier that predicts the currently-ahead team to win has an accuracy of 73.143 percent. All of our models do slightly out-perform this, but without something like an $F$-statistic, it's difficult to say whether this is a meaningful improvement.
+Examining the Shapley values\footnote{Shapley values are a game-theory based approach that adds random noise to samples in order to estimate the influence of each predictor on a model's outcome} \cite{captum, shap-paper} for the model with the best validation accuracy (Elman RNN, medium size) indicates that our complex neural networks have learned to focus almost entirely on each teams' score (\autoref{fig:model-shap-values}).
+We discuss the implications and potential causes of this in the following section.
 
-% TODO: validation plots?
+\begin{figure}
+	\centering
+	\input{figures/shapley.tikz}
+	\caption{The Shapley values for our model, which roughly measure the contribution of each column in our data to our model's predictions. The two big peaks correspond to the columns encoding away team score (which has a large negative effect on the home team winning) and home team score (which has a large positive effect). This plot supports the notion that our model has simply learned to pick the team currently in the lead, although the smaller peak just to the left hints that our model is also doing something with the information about the time remaining.}
+	\label{fig:model-shap-values}
+\end{figure}
+

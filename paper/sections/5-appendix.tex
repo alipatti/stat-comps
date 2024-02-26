@@ -1,0 +1,39 @@
+\FloatBarrier
+
+\begin{table}
+	\ttfamily \footnotesize
+	\begin{tabular}{ccc}
+		ShotType (2-pt dunk)        & FoulType (shooting)                 & TurnoverType (inbound)                 \\
+		ShotType (2-pt hook shot)   & FoulType (shooting block)           & TurnoverType (jump ball violation.)    \\
+		ShotType (2-pt jump shot)   & FoulType (technical)                & TurnoverType (kicked ball)             \\
+		ShotType (2-pt layup)       & ReboundType (defensive)             & TurnoverType (lane violation)          \\
+		ShotType (2-pt tip-in)      & ReboundType (offensive)             & TurnoverType (lane violation.)         \\
+		ShotType (3-pt hook shot)   & ViolationType (def goaltending)     & TurnoverType (lost ball)               \\
+		ShotType (3-pt jump shot)   & ViolationType (delay of game)       & TurnoverType (off goaltending)         \\
+		ShotType (3-pt layup)       & ViolationType (double lane)         & TurnoverType (offensive foul)          \\
+		ShotOutcome (make)          & ViolationType (jump ball)           & TurnoverType (offensive goaltending)   \\
+		ShotOutcome (miss)          & ViolationType (kicked ball)         & TurnoverType (out of bounds lost ball) \\
+		FreeThrowOutcome (make)     & ViolationType (lane)                & TurnoverType (palming)                 \\
+		FreeThrowOutcome (miss)     & ViolationType (violation)           & TurnoverType (punched ball)            \\
+		FoulType (away from play)   & TurnoverType (3 sec)                & TurnoverType (score in opp. basket)    \\
+		FoulType (clear path)       & TurnoverType (5 sec)                & TurnoverType (shot clock)              \\
+		FoulType (def 3 sec tech)   & TurnoverType (5 sec inbounds)       & TurnoverType (step out of bounds)      \\
+		FoulType (flagrant)         & TurnoverType (8 sec)                & TurnoverType (swinging elbows)         \\
+		FoulType (inbound)          & TurnoverType (back court)           & TurnoverType (traveling)               \\
+		FoulType (loose ball)       & TurnoverType (bad pass)             & TurnoverType (turnover)                \\
+		FoulType (offensive)        & TurnoverType (dbl dribble)          & TurnoverCause (steal)                  \\
+		FoulType (offensive charge) & TurnoverType (discontinued dribble) & SecLeft                                \\
+		FoulType (personal)         & TurnoverType (double personal)      & AwayScore                              \\
+		FoulType (personal block)   & TurnoverType (illegal assist)       & HomeScore                              \\
+		FoulType (personal take)    & TurnoverType (illegal screen)       & ShotDist
+	\end{tabular}
+	\caption{The full list of the 69 columns in our cleaned data set.}
+	\label{tbl:list-of-columns}
+\end{table}
+
+\begin{figure}
+	\centering
+	\input{figures/training_curves.tikz}
+	\caption{Training and validation accuracy for each model over the training period.}
+	\label{fig:training-curves}
+\end{figure}

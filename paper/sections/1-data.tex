@@ -1,30 +1,11 @@
 \section{Data}
 
-\subsection{Raw Data}
+Our analysis focuses on NBA play-by-play data from between 2015 and 2021. The raw data is collected by BasketballReference and published on their website \cite{bbref} (see \href{https://www.basketball-reference.com/boxscores/pbp/202101200TOR.html#q1}{here} for an example of what the raw data looks like). For this work, we use data scraped from basketball reference using \cite{pbp-scraper-github} and made available for csv download at \cite{kaggle-pbp-data}.
 
-We use play-by-play from basketball referenece
+In total, the data consists of 3,040,524 game events across 6,600 games, giving an average of 461 events per game. The distribution of events per game is shown in \autoref{fig:events-per-game}, and the breakdown of these events by type (e.g., shots, rebouds, etc.) and by time-of-game are given in \autoref{tbl:events-by-type} and \autoref{fig:events-by-time} respectively.
 
-% TODO: add citations
-Downloaded from Kaggle [citation], scraped using [citation].
-
-We clean and aggregate the data. One-hot encode columns corresponding to game events.
-
-For example, col for jump shot, hook shot, dunk current score for each team, time left, etc.
-
-Full list of columns given in \autoref{tbl:list-of-columns}.
-
-This data is fed into the neural network described in the next section.
-
-\begin{figure}
-	\includegraphics[width = .8 \textwidth]{figures/bbref-pbp.jpg}
-	\caption{Example play-by-play data as seen on BasetballReference.com.}
-\end{figure}
-
-\begin{table}
-	% TODO: make this table
-	\caption{The full list of the 69 columns in our data set.}
-	\label{tbl:list-of-columns}
-\end{table}
+Before feeding these events into our neural network, we remove columns related to player information (for example, who is taking the shot) and remove miscellaneous events not-related to gameplay (for example, events marking substitutions or timeouts). We then dummy-encode all the categorical variable and are left with 69 numeric columns. These include indicator variables for whether a shot was a jump shot, a dunk, a layup. Other columns record the current score for each team, the time left, or the distance from which a shot was taken.
+The full list of columns given in \autoref{tbl:list-of-columns}.
 
 \begin{table}
 	\centering
@@ -37,20 +18,24 @@ This data is fed into the neural network described in the next section.
 		Rebounds    & 690893  \\
 		Free Throws & 302084  \\
 		Fouls       & 275409  \\
-		Jumpballs   & 275409  \\
 		Turnovers   & 187496  \\
 		Violations  & 10884   \\
 		\hline
 	\end{tabular}
 	\caption{Number of events by event type.}
+	\label{tbl:events-by-type}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}
+	\centering
 	\input{figures/game_length_hist.tikz}
 	\caption{The distribution of number of events per game with the mean (461) shown in red.}
+	\label{fig:events-per-game}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
+	\centering
 	\input{figures/events_by_time.tikz}
 	\caption{The distribution of events as a function of the time left in the quarter. The highest event density (expectedly) occurs at the end of the fourth quarter.}
+	\label{fig:events-by-time}
 \end{figure}

@@ -1,44 +1,36 @@
 \section{Conclusion}
 
-In this paper, we modeled NBA basketball games as sequence of events (e.g. shots, fouls, rebounds) with the hope of creating a model that was able to predict the winner of a game while the game was in progress. Our models did learn to predict winners with 73 percent accuracy, but they were unable to outperform the naive method of predicting the winner to be the team currently in the lead. To close, we discuss a few reasons why our model may have under performed and outline several directions for future work.
+In this paper, we modeled NBA basketball games as sequences of events (e.g. shots, fouls, rebounds) with the hope of creating a model that was able to predict the winner of a game while the game was in progress. Our models did learn to predict winners with 73 to 74 percent accuracy, but they were unable to significaly outperform the naive method of predicting the winner to be the team currently in the lead. To close, we discuss a few reasons why our model may have under performed and outline several directions for future work.
 
 \subsection{Reasons for under-performance}
 
 \subsubsection{Score accurately captures game dynamics}
 
-lots of scoring in basketball, maybe score may simply just is the best predictor of the winner
-
-there are a few reasons why this may be the case
+There's a lot of scoring in basketball, and it's possible that there is simiply no better predictor than picking the team currently in the lead. This would be a similar outcome to performing regression on a huge number of potential explanatory variables only to discover that there's just a single variable has a statistically significant coefficient.
 
 \subsubsection{The vanishing/exploding gradient problem}
 
-model can't backprop
+When training our neural network, we compute the loss between the predicted win probability at time $p_t$ and the real outcome $y$. To compute the effect of an event far in the past on $p_t$, we must backpropogate through many, many recurrent units, in each one picking up an additional multiplicative term. This can lead to the gradient vanishing (when the terms are less than one) or exploding (when the terms are greater than one). The outcome is that, RNNs don't work well when events far in the past have influence on the present.
 
-when doing backpropogation
-
-The LSTM and gated recurrent units attempt to solve this issue, but they only put a band-aid on what is really a fundamental problem of the recurrent model architecture. In recent years, the transformer architecture \cite{attention-is-all-you-need} has taken the natural-language-processing and machine learning world by storm because of its non-recurrent way of modeling sequential data.
+The LSTM and gated recurrent units attempt to solve this issue, but they only put a band-aid on what is really a fundamental problem of the recurrent model architecture: they can only look so far back. In recent years, a new type of model called the transformer \cite{attention-is-all-you-need} has taken the natural-language-processing and machine learning world by storm because of its non-recurrent way of modeling sequential data that does not suffer from this vanishing gradient problem.
 
 \subsection{Future work}
 
 \subsubsection{A different loss function}
 
-Currently, we penalize being wrong about the game outcome the same regardless of when the event takes place in the game. this is easy to implement and makes sense within the framework of binary classification, but
-
-We care a lot more about our model being correct towards the end of the game. We doubt that this is the source of our model's performance issues, but it's something worth considering in the future.
+Currently, we penalize being wrong about the game outcome the same regardless of when in the game the prediction takes place. This is easy to implement and makes sense within the framework of binary classification, but we may see better performance by weighting our loss function to priorize being right near the end of a game. We doubt that this is the source of our model's performance issues, but it's something worth considering in the future.
 
 \subsubsection{Different sports}
 
-there's less scoring in soccer and hockey
+It would also be interesting to see if current score continues to be the best predictor in other sports. If we think of chances to score as random events, when you sum over a large number of chances (like in basketball), one gets a lower variance estimate of the skill of a team than in a sport with fewer chances (like soccer or hockey). One might hope that our model would be able to do better in that setting.
 
-if we think of chances as random events, when you sum them all up, you end up with a lower-variance estimate of the mean in basketball than you would in soccer and hockey
-
-Comprehensive play-by-play data for several thousand soccer games is available at \cite{statsbomb-open-data}, and preliminary cleaning and modeling work can be found in the \texttt{code} directory at \cite{stat-comps-github}.
+Comprehensive play-by-play data for several thousand soccer games is available at \cite{statsbomb-open-data}, and we began preliminary cleaning and modeling in the \texttt{code} directory at \cite{stat-comps-github}. We did not have time to finish this avenue of research.
 
 \subsubsection{A different model}
 
 (transformer in particular)
 
-\subsubsection{More data}
+\subsubsection{More (or different) data}
 
 we currently top out in 2021 (that's when our data set ends)
 
@@ -46,3 +38,6 @@ could be worth trying to get both more recent and older games, espesially with t
 
 the play-by-play scraping script [citation needed] could easily be used for this purpose.
 
+It would also be interesting to remove the current score of the game from the input
+
+It's possible that this could force the model to learn a more nuanced understanding.

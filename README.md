@@ -1,31 +1,26 @@
-# Statistics Comps
+# Sports as Sequences
 
-<!--toc:start-->
+Senior comprehensive project in statistics, Carleton College
 
-- [Statistics Comps](#statistics-comps)
-  - [TODO](#todo)
-  - [Long shots](#long-shots)
-  <!--toc:end-->
+## Reproducing results
 
-Alistair Pattison, Carleton College, 2024
+This requires both a `conda` and `R` installation.
+One can forgo `conda` if they want to manually install python dependencies.
 
-## TODO
+```bash
+# clone git repp
+git clone http://github.com/alipatti/stat-comps
+cd stat-comps
 
-- [ ] get NBA data
-- [ ] create preliminary representation in $\mathbb R^n$
-- [ ] create preliminary model
-- [ ] create training loop
-- [ ] train shitty model
-- [ ] create better embeddings
-- [ ] outline slides
-- [ ] make slides
-- [ ]  
+# create conda virtual environment and install dependencies
+conda env create -f environment.yaml
 
-## Long shots
+cd code
+python nba.py # fetch and clean the NBA data
+python training.py # train the models (this takes a while)
+python shapley.py # compute the shapley values for our model
+R -f plots_and_tables.r # make the plots and tables for our paper
 
-- [ ] player/team embeddings
-  - every action involving a player includes that player's traininable embedding
-
-## Data sources
-
-https://www.kaggle.com/datasets/schmadam97/nba-playbyplay-data-20182019?resource=download
+cd ../paper
+latexmk paper.tex
+```

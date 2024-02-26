@@ -28,16 +28,10 @@ Comprehensive play-by-play data for several thousand soccer games is available a
 
 \subsubsection{A different model}
 
-(transformer in particular)
+To address the vanishing gradient problem, it would interesting to see how the transformer archetecture handles sports data. In natural-language-processing, it blows recurrent networks out of the water at the cost of requiring a large ammount of training data and compute.
 
-\subsubsection{More (or different) data}
+There is more data available if that ends up being a bottleneck: The dataset used for this project ends in 2021, and the play-by-play scraping script \cite{pbp-scraper-github} could easily be used to scrape more recent games.
 
-we currently top out in 2021 (that's when our data set ends)
+\subsubsection{Feeding our network different data}
 
-could be worth trying to get both more recent and older games, espesially with the transformer model which famously needs a lot of data to produce meaningful results.
-
-the play-by-play scraping script [citation needed] could easily be used for this purpose.
-
-It would also be interesting to remove the current score of the game from the input
-
-It's possible that this could force the model to learn a more nuanced understanding.
+Given that our model focuses so obsessively on the current game score, it could be interesting to remove the score columns from the data fed to the network in order to force the model to learn to track the score itself in the hidden state. It's possible that this could push the network to learn a more nuanced understanding of the game. It's also possible that this could break everything.

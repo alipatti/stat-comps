@@ -1,5 +1,4 @@
 \documentclass{article}
-% \documentclass[titlepage]{article}
 
 \title{\scshape
 	Sports as Sequences \\[1em]
@@ -74,7 +73,7 @@
 \setcounter{page}{1}
 
 \begin{abstract}
-	% TODO: write abstract
+	In this paper, we model NBA basketball games as sequences of events (e.g. shots, fouls, rebounds) with the hope of creating a model can accurately predict winners while games are in progress. We do this using a recurrent neural network that, after every game event $x_t$, outputs a probability $p_t$ that the home team will win. Our models do learn to predict winners with 73 to 74 percent accuracy, but they are unable to significant outperform the naive method of predicting the winner to be the team currently in the lead. To close, we discuss a few reasons why our model may have under performed and outline several directions for future work.
 \end{abstract}
 
 \input{sections/0-intro.tex}

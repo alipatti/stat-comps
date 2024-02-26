@@ -19,6 +19,7 @@ dependencies:
 
   - numpy
   - pytorch
+  - captum
 
   # - pytorch-cuda=11.8
 

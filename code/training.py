@@ -205,7 +205,7 @@ def _load_latest_checkpoint(
     except IndexError:
         return None, 1  # no checkpoints in the directory
 
-    state = torch.load(path)
+    state = torch.load(path, map_location=DEVICE)
 
     # load model state in place
     res = model.load_state_dict(state["model"])

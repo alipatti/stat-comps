@@ -54,11 +54,11 @@ class SportSequenceModel(nn.Module):
 
         # the RNN itself
         self.rnn = (
-            nn.GRU(D_rnn, D_rnn, num_layers = rnn_layers)
+            nn.GRU(D_rnn, D_rnn, num_layers=rnn_layers)
             if rnn_type == "gru"
-            else nn.LSTM(D_rnn, D_rnn, num_layers = rnn_layers)
+            else nn.LSTM(D_rnn, D_rnn, num_layers=rnn_layers)
             if rnn_type == "lstm"
-            else nn.RNN(D_rnn, D_rnn, num_layers = rnn_layers)
+            else nn.RNN(D_rnn, D_rnn, num_layers=rnn_layers)
         )
 
         # module for taking hidden state to win probabilities

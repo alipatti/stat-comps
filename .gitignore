@@ -29,4 +29,7 @@ output
 data/**/*.csv
 data/**/*.pt
 data/statsbomb-events.zip
+data/*.parquet
 
+# model training checkpoints
+checkpoints/**/*.pt

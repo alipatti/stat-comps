@@ -2,10 +2,61 @@
 
 Our analysis focuses on NBA play-by-play data from between 2015 and 2021. The raw data is collected by BasketballReference and published on their website \cite{bbref} (see \href{https://www.basketball-reference.com/boxscores/pbp/202101200TOR.html#q1}{here} for an example of what the raw data looks like). For this work, we use data scraped from basketball reference using \cite{pbp-scraper-github} and made available for csv download at \cite{kaggle-pbp-data}.
 
-In total, the data consists of 3,040,524 game events across 6,600 games, giving an average of 461 events per game. The distribution of events per game is shown in \autoref{fig:events-per-game}, and the breakdown of these events by type (e.g., shots, rebouds, etc.) and by time-of-game are given in \autoref{tbl:events-by-type} and \autoref{fig:events-by-time} respectively.
+\subsection{Cleaning}
 
-Before feeding these events into our neural network, we remove columns related to player information (for example, who is taking the shot) and remove miscellaneous events not-related to gameplay (for example, events marking substitutions or timeouts). We then dummy-encode all the categorical variable and are left with 69 numeric columns. These include indicator variables for whether a shot was a jump shot, a dunk, a layup. Other columns record the current score for each team, the time left, or the distance from which a shot was taken.
-The full list of columns given in \autoref{tbl:list-of-columns}.
+Before feeding these events into our model, we do a bit of cleaning. First, we remove columns related to team or player information, for example, the names of the teams playing or the player who is taking the shot. At the moment, our model does not take these factors into account.
+% TODO: talk about response and number of columns of different types (categorical, numeric, etc.)
+We are left with ??? columns, of which ??? are numeric and ?? are catigorical.
+Numeric columns include the current score for each team, the time left, and the distance from which a shot was taken.
+Examples of categorical variables include the type of shot (jump shot, dunk, etc), the type of rebound (offensive vs defensive), and the type of foul.
+In order to pass the categorical variables into our modeo, we dummy encode them using 1-hot scheme as is typically done in regression. After doing this, we are left with 69 numeric columns, the full list of which is given in \autoref{tbl:list-of-columns}.
+
+\subsection{EDA}
+
+We are left with 3,040,524 events, about a third of which represent shot attempts. Rebounds and free throws combine for roughly another third of the events, with fouls, turnovers, and other violations making up the remainder. The exact numbers of events per type is given in \autoref{tbl:events-by-type}.
+
+The three million events in our data set are distributed fairly normally across 6,600 games with a mean of $461$ events per game and a standard deviation of $33.7$. The shortest game consists of $348$ events and the longest has length $695$. The complete distribution of game lengths has a slight right skew and is shown in \autoref{fig:events-per-game}. The distribution of events within each game is fairly uniform except for the presence of a large peak at the end of the fourth quarter corresponding to the rush of fouling, time-outs, and last-second shots at the end of a game.
+
+\subsection{Notation}
+
+Throughout the paper, we use the notation $\mathbf X_i = \paren{\mathbf x_t}_{t \leq T_i}$ to refer to a particular game $\mathbf X_i$ represented by a sequence of events $\mathbf x_t$. The variable $T_i$ is the length of the $i$th sequence. We encode the $i$th response variable (the game winner) using the indicator variable
+\begin{equation}
+	y_i = \begin{cases}
+		1 & \text{if the home team wins}  \\
+		0 & \text{if the away team wins}.
+	\end{cases}
+\end{equation}
+
+\begin{table}[p]
+	\ttfamily \footnotesize
+	\begin{tabular}{ccc}
+		ShotType (2-pt dunk)        & FoulType (shooting)                 & TurnoverType (inbound)                 \\
+		ShotType (2-pt hook shot)   & FoulType (shooting block)           & TurnoverType (jump ball violation.)    \\
+		ShotType (2-pt jump shot)   & FoulType (technical)                & TurnoverType (kicked ball)             \\
+		ShotType (2-pt layup)       & ReboundType (defensive)             & TurnoverType (lane violation)          \\
+		ShotType (2-pt tip-in)      & ReboundType (offensive)             & TurnoverType (lane violation.)         \\
+		ShotType (3-pt hook shot)   & ViolationType (def goaltending)     & TurnoverType (lost ball)               \\
+		ShotType (3-pt jump shot)   & ViolationType (delay of game)       & TurnoverType (off goaltending)         \\
+		ShotType (3-pt layup)       & ViolationType (double lane)         & TurnoverType (offensive foul)          \\
+		ShotOutcome (make)          & ViolationType (jump ball)           & TurnoverType (offensive goaltending)   \\
+		ShotOutcome (miss)          & ViolationType (kicked ball)         & TurnoverType (out of bounds lost ball) \\
+		FreeThrowOutcome (make)     & ViolationType (lane)                & TurnoverType (palming)                 \\
+		FreeThrowOutcome (miss)     & ViolationType (violation)           & TurnoverType (punched ball)            \\
+		FoulType (away from play)   & TurnoverType (3 sec)                & TurnoverType (score in opp. basket)    \\
+		FoulType (clear path)       & TurnoverType (5 sec)                & TurnoverType (shot clock)              \\
+		FoulType (def 3 sec tech)   & TurnoverType (5 sec inbounds)       & TurnoverType (step out of bounds)      \\
+		FoulType (flagrant)         & TurnoverType (8 sec)                & TurnoverType (swinging elbows)         \\
+		FoulType (inbound)          & TurnoverType (back court)           & TurnoverType (traveling)               \\
+		FoulType (loose ball)       & TurnoverType (bad pass)             & TurnoverType (turnover)                \\
+		FoulType (offensive)        & TurnoverType (dbl dribble)          & TurnoverCause (steal)                  \\
+		FoulType (offensive charge) & TurnoverType (discontinued dribble) & SecLeft                                \\
+		FoulType (personal)         & TurnoverType (double personal)      & AwayScore                              \\
+		FoulType (personal block)   & TurnoverType (illegal assist)       & HomeScore                              \\
+		FoulType (personal take)    & TurnoverType (illegal screen)       & ShotDist
+	\end{tabular}
+	\caption{The full list of the 69 columns in our cleaned data set.}
+	\label{tbl:list-of-columns}
+\end{table}
 
 \begin{table}
 	\centering

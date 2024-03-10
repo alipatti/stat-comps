@@ -1,28 +1,31 @@
 \section{Methods}
 \label{sec:methods}
 
-% \subsection{Support Vector Machines}
-%
-% % TODO: is it even worth describing this?
-%
-% computes 'max separating hyperplane' in data
-%
-% done by solving the following quadratic optimization problem
-% \begin{equation}
-% 	% TODO: 
-% \end{equation}
-%
-% not used in our work because it can't model sequence data
-%
-% can model non-linear boundaries via basis expansion and mapping the input into a higher-dimensional space via a non-linear transformation. we comput the best linear boundary in this space and then map back down into the original space. this is like how in cubic regression we map do a basis expansion  $\R^1 \to \R^3$ by sending $(x) \mapsto (1, x, x^2, x^3)$. We then do linear regression with respect to this higher-dimensional representation of our data.
-%
-% this can be made efficient via the ``kernel trick''
+\subsection{Framing the Problem}
+
+The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events and output a win probability logit with positive values corresponding to a predicted home team win and negative values corresponding to a predicted away win. This is a non-traditional statistics problem, and our analysis faces several challenges.
+
+First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary regression techniques like logistic regression useless.
+
+This fact makes our problem smell like it could benefit from a time-series approach, however classic time-series techniques like ARIMA are not appropriate for a few reasons:
+\begin{enumerate}
+	\item ARIMA models are based on fixed-size moving windows and can only look a specified distance into the past, when our problem requires the prediction to be a function of the \emph{entire} past sequence.
+	\item ARIMA (and most other) models attempt to predict the next value in a sequence. For us, this would correspond to predicting the next event in the game, which is not the goal of our analysis.
+\end{enumerate}
+
+The second big challenge is that our data consists mainly of categorical variables with very few numeric columns, making techniques like SVMs less appropriate \cite{ISL}. A popular approach for categorically-heavy data is to use a tree-based method like random forests, often combined with an ensemble tools like bagging and boosting \cite{ESL}. However, it was not clear how to adapt these methods in order to handle our sequential input.
+
+In order to handle these two issues, we resort to using neural networks.
 
 \subsection{Neural Networks}
 
-It's hard to define exactly what a neural network is: the term is used broadly to describe a large class of model characterized mostly by the method used to estimate the models' parameters: gradient descent via the backpropagation algorithm. In this paper, we focus on two specific types of neural networks: the multilayer perceptron and the recurrent neural network.
+It's hard to define exactly what a neural network is: the term is used broadly to describe a large class of model characterized mostly by the method used to estimate the models' parameters: gradient descent via the backpropagation algorithm. In this paper, we focus on two specific types of neural networks: the multilayer perceptron (MLP) and the recurrent neural network (RNN). MLPs are a flexible classification and regression model that can handle our categorically-heavy input; RNNs enable our model to handle variable-length input \cite{PML}.
 
-This is \emph{not} a comprehensive treatment. There are many more types of neural networks, each of which is well-suited for a specific task. A few examples are convolutional neural networks (which are commonly used for image-related tasks), transformers (which power natural-language models like GPT), and generative adversarial networks (which have found recent fame due their ability to generate deep-fakes). Chapter 11 of \textcite{ESL} and Part III of \textcite{PML} provide excellent and statistically-motivated introductions to the subject.
+At a high level, our approach centers around maintaining a vector $h_t$ that represents the ``state of the game'' at a time $t$. At each time step, we use a recurrent neural network to update $h_t$ using the previous state $h_{t-1}$ and the current event $\mathbf x_t$. We then use this state $h_t$ to derive an estimate for the home team win probability using a multilayer perceptron. This approach is developed in detail in \autoref{sec:complete-model}, but first, we develop the necessary pieces.
+
+% TODO: citations for this
+
+This is \emph{not} a comprehensive treatment. There are many more types of neural networks, each of which is well-suited for a specific task. A few examples are convolutional neural networks (which are commonly used for image-related tasks), transformers (which power natural-language models like GPT) \cite{attention-is-all-you-need}, and generative adversarial networks (which have found recent fame due their ability to generate deep-fakes). Chapter 11 of \textcite{ESL} and Part III of \textcite{PML} provide excellent and statistically-motivated introductions to the subject.
 
 \subsection{The Multi-layer Perceptron}
 
@@ -138,6 +141,8 @@ Derivatives with respect to the other two parameter groups follow from the same 
 	\frac{\partial x_1}{\partial A}.
 \end{equation*}
 
+% TODO: give example of taking derivative of some loss function
+
 This process of computing gradients is known as \emph{backpropogation} and is the basis for training all neural networks. When we write out a neural network as a computational graph (\autoref{fig:mlp-computational-graph}), we can view backpropogation as a backwards traversal from the loss to the parameters, where at every step in the graph, we acquire an additional term in our gradient expression.
 
 \begin{figure}
@@ -233,6 +238,7 @@ where $\sigma$ is some non-linear function---we use the hyperbolic tangent becau
 We also use two other forms of recurrent neural networks known as Gated Recurrent Units and Long Short Term Memory. These employ more complex internal logic that allow gradients to ``flow'' backwards more cleanly and enable events further in the past to have influence on the current hidden state. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite[\S 15.2.7]{PML} for a complete exposition.
 
 \subsection{The Complete Sport Sequence Model}
+\label{sec:complete-model}
 
 With all the pieces built up, we now describe our complete model.
 

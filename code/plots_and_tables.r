@@ -16,6 +16,11 @@ game_lengths <- df %>%
         group_by(URL) %>%
         summarise(T = n())
 
+sd(game_lengths$T)
+mean(game_lengths$T)
+min(game_lengths$T)
+max(game_lengths$T)
+
 plots$game_length_hist <-
         game_lengths %>%
         ggplot(aes(T)) +

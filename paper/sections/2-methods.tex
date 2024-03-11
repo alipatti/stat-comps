@@ -3,17 +3,17 @@
 
 \subsection{Framing the Problem}
 
-The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events and output a win probability logit with positive values corresponding to a predicted home team win and negative values corresponding to a predicted away win. This is a non-traditional statistics problem, and our analysis faces several challenges.
+The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events and output an estimate of the probability that the home team wins. This is a non-traditional statistics problem, and our analysis faces several challenges.
 
-First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary regression techniques like logistic regression useless.
+First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary classification techniques like logistic regression useless.
 
-This fact makes our problem smell like it could benefit from a time-series approach, however classic time-series techniques like ARIMA are not appropriate for a few reasons:
+This sequential aspect of our data makes our problem smell like it could benefit from a time-series approach \cite[ch. 4, 5]{TSA}, however classic time-series techniques like ARIMA are not appropriate for a few reasons:
 \begin{enumerate}
 	\item ARIMA models are based on fixed-size moving windows and can only look a specified distance into the past, when our problem requires the prediction to be a function of the \emph{entire} past sequence.
 	\item ARIMA (and most other) models attempt to predict the next value in a sequence. For us, this would correspond to predicting the next event in the game, which is not the goal of our analysis.
 \end{enumerate}
 
-The second big challenge is that our data consists mainly of categorical variables with very few numeric columns, making techniques like SVMs less appropriate \cite{ISL}. A popular approach for categorically-heavy data is to use a tree-based method like random forests, often combined with an ensemble tools like bagging and boosting \cite{ESL}. However, it was not clear how to adapt these methods in order to handle our sequential input.
+The second big challenge is that our data consists mainly of categorical variables with very few numeric columns, making techniques like support vector classifiers less appropriate \cite[\S 9]{ISL}. A popular approach for categorically-heavy data is to use a tree-based method like random forests, often combined with an ensemble tools like bagging and boosting \cite[\S 9, \S 10]{ESL}. However, it was not clear how to adapt these methods in order to handle our sequential input.
 
 In order to handle these two issues, we resort to using neural networks.
 
@@ -23,19 +23,23 @@ It's hard to define exactly what a neural network is: the term is used broadly t
 
 At a high level, our approach centers around maintaining a vector $h_t$ that represents the ``state of the game'' at a time $t$. At each time step, we use a recurrent neural network to update $h_t$ using the previous state $h_{t-1}$ and the current event $\mathbf x_t$. We then use this state $h_t$ to derive an estimate for the home team win probability using a multilayer perceptron. This approach is developed in detail in \autoref{sec:complete-model}, but first, we develop the necessary pieces.
 
-% TODO: citations for this
-
 This is \emph{not} a comprehensive treatment. There are many more types of neural networks, each of which is well-suited for a specific task. A few examples are convolutional neural networks (which are commonly used for image-related tasks), transformers (which power natural-language models like GPT) \cite{attention-is-all-you-need}, and generative adversarial networks (which have found recent fame due their ability to generate deep-fakes). Chapter 11 of \textcite{ESL} and Part III of \textcite{PML} provide excellent and statistically-motivated introductions to the subject.
 
 \subsection{The Multi-layer Perceptron}
 
-The simplest non-trivial neural network is known as a \emph{multi-layer perceptron} or \emph{feedforward neural network} and can be thought of loosely as a non-linear sandwich on two slices of linear bread. More precisely, to model a function $f : \R^n \to \R^m$, we introduce an intermediate space $\R^k$---typically called the \emph{hidden layer}. The dimension of this space is a model hyperparameter. We first map our inputs into this intermediate space via a linear function $x \mapsto Ax + b$ where $A$ is a $k \times n$ matrix and $b$ is a $k$-dimensional vector. We then apply a non-linear function $\sigma$ element-wise to our values in the intermediate space $\R^k$ before mapping back down to our output space $\R^m$ via a linear transformation $x \mapsto Cx$ where $C$ is am $m \times k$ matrix. In total, the multi-layer perceptron model equation is
+In this section, we describe the simplest non-trivial neural network known as a \emph{multi-layer perceptron} or \emph{feedforward neural network} \cite[\S 10.1]{ISL}, \cite[\S 11.3]{ESL}, \cite[13.2]{PML}. Very loosely, multilayer perceptrons are non-linear sandwiches on slices of linear bread; we use them as basic building blocks in several places for our final model.
+
+More precisely, in order to model a function $f : \R^n \to \R^m$, we introduce an intermediate space $\R^k$ called the \emph{hidden layer}. We first map our inputs $x$ into this intermediate space via a linear function $f_1(x) = x \mapsto Ax + b$ where $A$ is a $k \times n$ matrix and $b$ is a $k$-dimensional vector. We then apply a non-linear function $\sigma$ element-wise to our values in the intermediate space $\R^k$ before mapping back down to our output space $\R^m$ via a second linear transformation $f_2(x) = Cx$ where $C$ is an $m \times k$ matrix. In total, the multi-layer perceptron model equation is
 \begin{equation}
 	\label{eqn:mlp}
-	f(x) = C \, \sigma(Ax + b).
+	f(x)
+	= f_2 \of \sigma \of f_1(x)
+	= C \, \sigma(Ax + b).
 \end{equation}
+The model's parameters are entries of the vector $b$ and the matrices $A$ and $C$.
+The dimension of the hidden space $k$ and the non-linear function $\sigma$ are model hyperparameters and are chosen in advance.
 
-In the world of deep learning, we typically refer to the matrices $A$ and $C$ as \emph{weights} and the vector $b$ as \emph{bias}. The function $\sigma$ is known as the \emph{activation function}. Historically, the most popular choices for $\sigma$ have been the sigmoid function
+In the world of deep learning, we typically refer $A$ and $C$ as \emph{weights} and $b$ as \emph{bias}. The function $\sigma$ is known as the \emph{activation function}. Historically, the most popular choices for $\sigma$ have been the sigmoid function
 \begin{equation}
 	\sigma(x) = \frac{e^x}{1 + e^x}
 \end{equation}
@@ -43,9 +47,39 @@ and the hyperbolic tangent, $\tanh$. More recently the ``recified linear unit'' 
 \begin{equation}
 	{\rm ReLu}(x) = \max(x, 0)
 \end{equation}
-has become popular due to its cheap-to-compute gradient. (The following section will reveal why this is relevant.)
+has become popular because it and its derivative are cheap and easy to compute \cite[\S 10.5]{ISL}, \cite[\S 13.3.2]{PML}. (The following section will reveal why this is relevant.) Plots of these three popular functions are shown in \autoref{fig:activation-functions}.
 
-\begin{figure}
+\begin{figure}[h]
+	\begin{tikzpicture}[baseline]
+		\datavisualization[
+		scientific axes=clean,
+		y axis=grid,
+		visualize as smooth line/.list={sin,cos,tan},
+		style sheet=strong colors,
+		% style sheet=vary dashing,
+		sin={label in legend={text={$\sigma(x) = {e^x}/\paren{1+e^x}$}}},
+		cos={label in legend={text={$\tanh(x)$}}},
+		tan={label in legend={text={$\mathrm{ReLu}(x) = \max(0, x)$}}},
+		data/format=function
+		]
+		data [set=sin] {
+				var x : interval [-3:3];
+				func y = pow(2.718281, \value x) / (1 + pow(2.718281, \value x));
+			}
+		data [set=cos] {
+				var x : interval [-3:3];
+				func y = tanh(\value x);
+			}
+		data [set=tan] {
+				var x : interval [-3:1.5];
+				func y = max(0, \value x);
+			};
+	\end{tikzpicture}
+	\caption{The three most popular activation functions: the sigmoid function, the hyperbolic tangent function, and the rectified linear unit.}
+	\label{fig:activation-functions}
+\end{figure}
+
+\begin{figure}[h]
 	\centering
 	\begin{tikzpicture}
 		\graph[
@@ -63,67 +97,212 @@ has become popular due to its cheap-to-compute gradient. (The following section 
 		\node[right = of hidden label] {\underline{Output layer}};
 	\end{tikzpicture}
 
-	\caption{A multi-layer perceptron with $n = 3$, $k = 4$, and $m = 2$.  We first map our input into a ``hidden layer'' via a linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space. Mathematically, each ``neuron'' in the hidden layer takes on the value $z_i = \sigma(a_{i1} x_1 + \cdots + a_{in} x_n + b_i)$ and the ``neurons'' in the output layer take the values $y_i = c_{i1} z_1 + \cdots + w_{ik} z_k$. The ``weights'' $\set{a_{ij}} \cup \set{b_{ij}}$ and ``biases'' $\set{b_i}$ are the model's parameters.}
+	\caption{A multi-layer perceptron with input dimension $3$, hidden dimension $4$, and output dimension $1$. We first map our input into a ``hidden layer'' via a linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space. Mathematically, each ``neuron'' in the hidden layer takes on the value $z_i = \sigma(a_{i1} x_1 + \cdots + a_{in} x_n + b_i)$ and the ``neurons'' in the output layer take the values $y_i = c_{i1} z_1 + \cdots + w_{ik} z_k$. The ``weights'' $\set{a_{ij}} \cup \set{b_{ij}}$ and ``biases'' $\set{b_i}$ are the model's parameters.}
 	\label{fig:mlp-diagram}
 \end{figure}
 
-This simple model is what is known as a \emph{universal function approximator}. In layman's terms, this means that for any function $g : \R^n \to \R^m$, there exist choices for $k$, $A$, $b$ and $C$ such that the multi-layer perceptron can approximate $g$ to any desired level of precision. More mathematically, for any continuous $g : K \to \R^m$ where $K \subseteq R^n$ is compact, there exists a sequence of functions $f_i$ of the form in \autoref{eqn:mlp} that uniformly converges to $g$. This property is true regardless of the choice of activation function, with the only condition being that $\sigma$ not be polynomial.
+This simple model is what is known as a \emph{universal function approximator}. In layman's terms, this means that for any function $g : \R^n \to \R^m$, there exist choices for $k$, $A$, $b$ and $C$ such that the multi-layer perceptron can approximate $g$ to any desired level of precision. More mathematically, for any continuous $g : K \to \R^m$ where $K \subseteq R^n$ is compact, there exists a sequence of functions $f_i$ of the form in \autoref{eqn:mlp} that uniformly converges to $g$. This property is true regardless of the choice of activation function, with the only condition being that $\sigma$ not be polynomial \cite[\S 13.2.5]{PML}.
 
-Although this universal flexibility in theory only requires a single hidden layer, the above theorem places no bound on $k$---the hidden layer's dimension. In practice, one can (and often does) increase the network's ``depth'' by including multiple hidden layers in order to limit the networks ``width''. The construction extends quite naturally from the setting with a single hidden layer: between each layer, we apply a linear transformation $x \mapsto Ax + b$. At each hidden layer, we apply an element-wise non-linearity $\sigma$.
+Although this universal flexibility in theory only requires a single hidden layer, the above theorem places no bound on $k$---the hidden layer's dimension. In practice, one can (and often does) increase the network's ``depth'' by including multiple hidden layers in order to limit the networks ``width'' \cite[\S 13.2.5]{PML}, \cite[10.2]{ISL}. The construction extends quite naturally from the setting with a single hidden layer: between each layer, we apply a linear transformation $x \mapsto Ax + b$. At each hidden layer, we apply an element-wise non-linearity $\sigma$.
 
-The name ``neural network'' makes a bit of sense when the input, hidden, and output spaces are laid out as in \autoref{fig:mlp-diagram}. Here, the elements of each space are thought of as ``neurons'' with the weights representing the strength of each neural connection.
-This connection with the human brain was apparently the inspiration for the conception of the multilayer perceptron in 1958, however the terms ``perceptron'' and ``neural network'' often receive criticism for exaggerating what is at best a tenuous connection.
+The phrase ``neural network'' makes a bit of sense when the input, hidden, and output spaces are laid out as in \autoref{fig:mlp-diagram}. Here, the elements of each space are thought of as ``neurons'' with the weights representing the strength of each neural connection.
+This connection with the human brain was apparently the inspiration for the conception of the multilayer perceptron in 1958, however the terms ``perceptron'' and ``neural network'' often receive criticism for exaggerating what is at best a tenuous connection \cite[\S 13.2.7]{PML}.
+
+\subsection{Recurrent Neural Networks}
+
+\begin{figure}[t]
+	\centering
+	\begin{tikzpicture}[
+			node distance = 1.5em and 4em,
+			->,
+			module/.style={ draw, rounded corners,
+					inner sep=10pt, outer sep=5pt},
+			every edge quotes/.style={fill=white, font=\small},
+		]
+
+		\node[module] (rnn1) {RNN};
+		\node[module, right = of rnn1] (rnn2) {RNN};
+		\node[module, right = of rnn2] (rnn3) {RNN};
+
+		\node[left = of rnn1] (h0) {};
+		\node[right = of rnn3] (h1) {};
+
+		\node[above = of rnn1] (x1) {$\mathbf x_t$};
+		\node[above = of rnn2] (x2) {$\mathbf x_{t+1}$};
+		\node[above = of rnn3] (x3) {$\mathbf x_{t+2}$};
+
+		\draw[->] (x1) -- (rnn1);
+		\draw[->] (x2) -- (rnn2);
+		\draw[->] (x3) -- (rnn3);
+		\draw[->] (h0) edge["$\mathbf h_{t-1}$"] (rnn1);
+		\draw[->] (rnn1) edge["$\mathbf h_t$"] (rnn2);
+		\draw[->] (rnn2) edge["$\mathbf h_{t+1}$"] (rnn3);
+		\draw[->] (rnn3) edge["$\mathbf h_{t+2}$"] (h1);
+	\end{tikzpicture}
+
+	\caption{A simple recurrent neural network.}
+	\label{fig:simple-rnn}
+\end{figure}
+
+Although the multilayer perceptron described in the previous section is quite powerful, it has a notable drawback that prevents us from applying it directly to our problem: MLPs can only handle input of a fixed dimension. Recall that our goal is to develop a model that takes in an in-progress game represented as a sequence of the form $(\mathbf x_1, \ldots, \mathbf x_t)$ and outputs a probability $p_t$ that the home team wins. Although each event $\mathbf x_t$ is of a constant dimension, the win probability depends on much more than just a single event. In fact, $p_t$ depends on \emph{all} the preceding events $\mathbf x_1, \ldots, \mathbf x_t$.
+
+In order to enable past events to influence present predictions, one common approach is to maintain a ``hidden state'' vector $\mathbf h_t$ that one can think of as capturing the essence of the sequence up to time $t$. We continually update $\mathbf h_t$ with new events as they occur, as is shown in \autoref{fig:simple-rnn}.
+% To derive the predicted win probability, we use a multilayer perceptron $\mathbf h_t$.
+This approach to sequence modeling is known as a \emph{recurrent neural network} because the hidden state is updated recursively: $\mathbf h_t$ is a function of $\mathbf x_t$ and $\mathbf h_{t-1}$ \cite[\S 10.5]{ISL}, \cite[\S 15]{PML}.
+
+The RNN internals are similar to the multilayer perceptron: we update the hidden state via a non-linear function applied to a linear combination of $\mathbf x_t$ and the previous hidden state $\mathbf h_{t-1}$. Precisely,
+\begin{equation}
+	\label{eqn:elman-rnn}
+	h_t = \tanh (A \mathbf x_t + B \mathbf h_{t-1} + \mathbf c)
+\end{equation}
+where $\sigma$ is some non-linear function, $\mathbf c$ is a vector, and $A$ and $B$ are matrices. We use the hyperbolic tangent because that is the default option in the \texttt{pytorch} package we use to implement our model \cite{pytorch}. We also use two other forms of recurrent neural networks known as Gated Recurrent Units \cite[\S 15.2.7.1]{PML} and Long Short Term Memory \cite[\S 10.5.1]{ISL}, \cite[\S 15.2.7.2]{PML}. These employ complex internal logic that enables events further in the past to have more influence on the current hidden state \cite[\S 15.2.6]{PML}. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite[\S 15.2.7]{PML} for a complete exposition.
+
+\subsection{The Complete Sport Sequence Model}
+\label{sec:complete-model}
+
+With all the pieces built up, we now describe our complete model.
+
+The raw event data $\mathbf x_t$ is first fed into a multilayer perceptron, then passed into the recurrent layer to generate the hidden game state $\mathbf h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}.
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[
+			node distance = 1.5em and 3.5em,
+			->,
+			module/.style={ draw, rounded corners,
+					inner sep=10pt, outer sep=5pt},
+			every edge quotes/.style={fill=white, font=\small},
+		]
+
+		\node[module] (rnn1) {RNN};
+		\node[module, right = of rnn1] (rnn2) {RNN};
+		\node[module, right = of rnn2] (rnn3) {RNN};
+		\node[right = of rnn3] (rnn4) {$\cdots$};
+
+		\node[module, above = of rnn1] (mlpt1) {MLP\textsubscript{top}};
+		\node[module, above = of rnn2] (mlpt2) {MLP\textsubscript{top}};
+		\node[module, above = of rnn3] (mlpt3) {MLP\textsubscript{top}};
+
+		\node[left = of rnn1] (h0) {$\mathbf h_0$};
+
+		\node[above = of mlpt1] (x1) {$\mathbf x_1$};
+		\node[above = of mlpt2] (x2) {$\mathbf x_2$};
+		\node[above = of mlpt3] (x3) {$\mathbf x_3$};
+
+		\node[module, below = 1cm of rnn1] (mlpb1) {MLP\textsubscript{bot}};
+		\node[module, below = 1cm of rnn2] (mlpb2) {MLP\textsubscript{bot}};
+		\node[module, below = 1cm of rnn3] (mlpb3) {MLP\textsubscript{bot}};
+
+		\node[below = of mlpb1] (p1) {$\logit p_1$};
+		\node[below = of mlpb2] (p2) {$\logit p_2$};
+		\node[below = of mlpb3] (p3) {$\logit p_3$};
+
+		\draw (h0) -- (rnn1);
+		\draw (rnn1) edge["$\mathbf h_1$"] (rnn2);
+		\draw (rnn2) edge["$\mathbf h_2$"] (rnn3);
+		\draw (rnn3) edge["$\mathbf h_3$"] (rnn4);
+
+		\draw (x1) -- (mlpt1);
+		\draw (x2) -- (mlpt2);
+		\draw (x3) -- (mlpt3);
+
+		\draw (mlpt1) -- (rnn1);
+		\draw (mlpt2) -- (rnn2);
+		\draw (mlpt3) -- (rnn3);
+
+		\draw (rnn1) edge["$\mathbf h_1$"] (mlpb1);
+		\draw (rnn2) edge["$\mathbf h_2$"] (mlpb2);
+		\draw (rnn3) edge["$\mathbf h_3$"] (mlpb3);
+
+		\draw (mlpb1) -- (p1);
+		\draw (mlpb2) -- (p2);
+		\draw (mlpb3) -- (p3);
+	\end{tikzpicture}
+
+	\caption{Our network architecture.}
+	\label{fig:full-model}
+\end{figure}
+
+We experiment with several different levels of complexity for the two multilayer perceptrons and the recurrent component. Precisely, we vary the number and dimension of hidden layers in the MLPs as well as the dimension of the hidden state $\mathbf h_t$. We also experiment with ``stacking'' RNN layers. In this configuration, the hidden states of first RNN layer serve as the input sequence for the second layer. We make our predictions from the second layer's hidden states. The five model ``sizes'' we test are given in \autoref{tbl:model-sizes}. Each of these sizes is tested with the simple RNN (\autoref{eqn:elman-rnn}) as well as the more-complicated gated and LSTM recurrent units.
+
+\begin{table}
+	\begin{tabular}{r ccc}
+		\hline
+		Size        & RNN layers & $\mathbf h_t$ dimension & MLP hidden layers  \\
+		\hline
+		\texttt{xs} & 1          & 32                      & $\tuple{}$         \\
+		\texttt{sm} & 1          & 64                      & $\tuple{64}$       \\
+		\texttt{md} & 1          & 128                     & $\tuple{128}$      \\
+		\texttt{lg} & 2          & 128                     & $\tuple{128, 128}$ \\
+		\texttt{xl} & 4          & 128                     & $\tuple{128, 128}$ \\
+		\hline
+	\end{tabular}
+	\caption{The five model sizes ranging from \texttt{xs} to \texttt{xl}.}
+	\label{tbl:model-sizes}
+\end{table}
 
 \subsection{Estimating Network Parameters}
 
-In the previous section, we established that the simple multilayer perceptron can approximate a wide class of functions with the right choices of $k$, $A$, $b$, and $C$. But how do we find these parameters?
+% TODO: add citations to this section
 
-Framing this in a more classical statistical setting, we would like to find $A$, $b$, and $C$ such that the output of our model $\hat f(x)$ is as close as possible to the true value $y$. If we have a set of observations $\set{x_i}$ with labels $\set{y_i}$, we would like to solve the following minimization problem:
-\begin{equation*}
-	\argmin_\beta \sum_i \ell(\hat f(x_i), y_i)
-\end{equation*}
-where $\ell$ is some context dependent ``loss function'' and $\beta$ is the set of all our models parameters. The familiar choice from regression is the squared error
+The model described in the previous section is quite complex, and our exposition of it left a big question unanswered: how do we find its parameters, i.e., the entries for the matrices in \autoref{eqn:mlp} and \autoref{eqn:elman-rnn}? The answer likes in a clever application of the chain rule known as backpropogation.
+
+To illustrate how neural networks parameters are estimated, we work through the simple case of a multi-layer perceptron, and then describe how this process extends quite naturally to more complicated networks like our complete model in the previous section. More thorough descriptions of the backpropgation algorithm and fitting neural network parameters are given in \textcite[\S 13.4]{PML}, \textcite[\S 11.4]{ESL}, and \textcite[10.7]{ISL}
+
+To start, recall the model equation for a multi-layer perceptron on some input $z$:
 \begin{equation}
-	\ell(\hat f(x), y) = \norm{\hat f(x) - y}^2.
+	f(\mathbf z) = C \sigma (A\mathbf z + \mathbf b)
 \end{equation}
-In binary classification (the setting for our win-prediction), one typically uses \emph{binary cross-entropy loss}, defined as
+where $A$ and $B$ are matrices, $b$ is a vector, and $\sigma$ is a non-linear activation function. We would like to find values for the entries of $A$, $\mathbf b$, and $C$ such that the output of our model $\hat f(\cdot)$ is as close as possible to the true values. To do this, we minimize some loss function $\ell$ with respect to a set of training data $\set{\mathbf z_i}$ with labels $\set{y_i}$
+\begin{equation*}
+	\argmin_{A, \mathbf b, C} \sum_i \ell(\hat f(\mathbf z_i), y_i)
+\end{equation*}
+In the context of our sport sequence win prediction, the training data are sequences of events and the labels are binary indicator variables. For the sake of simplicity, we focus on the case when the inputs $\mathbf z_i$ are of a fixed dimension in this example.
+
+% TODO: does the model output logits or probabilities?
+
+In binary classification (our setting), we typically take the loss function to be the negative log likelihood
 \begin{equation}
 	\label{eqn:bce-loss}
-	\ell(\hat f(x), y) = y \log \hat f(x) + (1 - y) \log (1 - \hat f(x))
+	\ell(\hat f(\mathbf z), y) = y \log \hat f(\mathbf z) + (1 - y) \log (1 - \hat f(\mathbf z)).
 \end{equation}
-where $y \in \set{0, 1}$ is our binary label and $\hat f(x)$ is our predicted probability that $x$ belongs to the class $1$.
-This loss function has a close relationship to maximum likelihood estimation. In fact, it turns out that minimizing BCE loss yields a selection of parameters with maximum likelihood.
+In the deep learning literature, this loss function is known as \emph{binary cross-entropy}.
 
-Unfortunately, unlike in linear regression, there is no nice closed-form solution for a neural network's parameters.
-In many cases, we do not even want a global minimum for the loss function because the number of parameters in neural networks is so large that the models tend to over-fit.
-Instead, we make initial (usually random) parameter assignments and gradually update them with tiny nudges---each of which decreases the total loss by a small amount.
-To do this, we compute the gradient of the loss function with respect to the parameters through a clever application of the chain rule known as backpropogation.
+Unlike with ordinary least squares, there is unfortunately no nice closed-form solution for a neural network's parameters that minimizes this loss function. Even worse, this objective function is not necessarily convex, so we can't use off-the-shelf convex optimization techniques like with many other models that use maximum likelihood estimation.
+Instead, we make initial (usually random) parameter assignments and gradually update them with tiny nudges---each of which decreases the total loss by a small amount. This process is called gradient descent.
 
-To demonstrate how this works, we return to the multilayer perceptron. During what is known as the ``forward pass'' in which we compute $\hat f(x)$, we keep track of intermediate states
+% TODO: transition?
+
+During what is known as the ``forward pass'' in which we compute $\hat f(\mathbf z)$, we keep track of intermediate values
 \begin{equation}
 	\begin{aligned}
-		x_1 & = Ax,                          \\
-		x_2 & = Ax  + b,                     \\
-		x_3 & = \sigma(Ax  + b),             \\
-		x_4 & = f(x) = C \, \sigma(Ax  + b).
+		\mathbf v_0 & = \mathbf z                                                   \\
+		\mathbf v_1 & = A\mathbf v_0        &  & = A \mathbf z,                     \\
+		\mathbf v_2 & = \mathbf v_1 + b     &  & = A\mathbf z  + \mathbf b,         \\
+		\mathbf v_3 & = \sigma(\mathbf v_2) &  & = \sigma(A\mathbf z  + \mathbf b), \\
+		\mathbf v_4 & = C \mathbf v_3       &  & = f(\mathbf z).
 	\end{aligned}
 \end{equation}
+This is shown graphically in \autoref{fig:mlp-computational-graph}
 In the ``backward pass'' we use these intermediate states and the chain rule to compute the derivative of the loss with respect to each of the models parameters.
 For example, the gradient of the MLP loss with respect to $C$ is
 \begin{equation*}
 	\frac{\partial \ell}{\partial C}
-	= \frac{\partial \ell}{\partial x_4}
-	\frac{\partial x_4}{\partial C}.
+	= \frac{\partial \ell}{\partial \mathbf z_4}
+	\frac{\partial \mathbf z_4}{\partial C}.
 \end{equation*}
-The crucial observation is that each of these partial derivatives is easily computable given the intermediate values computed in the forward pass. For example,
+The crucial observation is that each of these partial derivatives on the right-hand-side of the equation is easily computable given the intermediate values computed in the forward pass.
+For example,
+
+We can compute
 \begin{equation}
-	\frac{\partial x_4}{\partial C} = x_3.
+	\begin{aligned}
+		\frac{\partial \ell}{\partial C}
+		 & = \frac{\partial \ell}{\partial x_4}
+		\frac{\partial x_4}{\partial C} \\
+		&= \paren{}\paren{\mathbf v_4}
+	\end{aligned}
 \end{equation}
-% and when we use the BCE loss (\autoref{eqn:bce-loss}),
-% \begin{equation}
-% 	% TODO: compute this
-% 	\frac{\partial \ell}{\partial x_4} =
-% \end{equation}
 Derivatives with respect to the other two parameter groups follow from the same process:
 \begin{equation*}
 	\frac{\partial \ell}{\partial b}
@@ -186,137 +365,4 @@ With these gradients in hand, we update our original guesses
 \end{equation}
 and by repeating this process enough times, one arrives as what is typically a good parameter estimate. In practice, this process of computing gradients and updating parameter assignments is done automatically by a software library (we use \texttt{pytorch} \cite{pytorch}).
 
-One of the miracles of machine learning is how well this process scales. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters.
-
-\subsection{Recurrent Neural Networks}
-
-Until now, we haven't discussed how to model sequences with neural networks. This requires consideration. For example, in the context of our data set, the win probability at time $t$ depends on much more than just the immediately-preceding event. In fact, $p_t$ depends on \emph{all} the preceding events $x_1, \ldots, x_t$.
-
-In order to enable past events to influence present predictions, one common approach is to maintain an internal hidden state $h_t$ that one can think of as capturing the state of the sequence at time $t$. We continually update $h_t$ with new events as is shown in  \autoref{fig:simple-rnn}, and it is from this hidden state $h_t$ that predictions are made. This approach to sequence modeling is known as a \emph{recurrent neural network} and, until recently, been the main way that sequences are handled with deep learning.
-
-\begin{figure}
-	\centering
-	\begin{tikzpicture}[
-			node distance = 1.5em and 4em,
-			->,
-			module/.style={ draw, rounded corners,
-					inner sep=10pt, outer sep=5pt},
-			every edge quotes/.style={fill=white, font=\small},
-		]
-
-		\node[module] (rnn1) {RNN};
-		\node[module, right = of rnn1] (rnn2) {RNN};
-		\node[module, right = of rnn2] (rnn3) {RNN};
-
-		\node[left = of rnn1] (h0) {};
-		\node[right = of rnn3] (h1) {};
-
-		\node[above = of rnn1] (x1) {$x_t$};
-		\node[above = of rnn2] (x2) {$x_{t+1}$};
-		\node[above = of rnn3] (x3) {$x_{t+2}$};
-
-		\draw[->] (x1) -- (rnn1);
-		\draw[->] (x2) -- (rnn2);
-		\draw[->] (x3) -- (rnn3);
-		\draw[->] (h0) edge["$h_{t-1}$"] (rnn1);
-		\draw[->] (rnn1) edge["$h_t$"] (rnn2);
-		\draw[->] (rnn2) edge["$h_{t+1}$"] (rnn3);
-		\draw[->] (rnn3) edge["$h_{t+2}$"] (h1);
-	\end{tikzpicture}
-
-	\caption{A simple recurrent neural network.}
-	\label{fig:simple-rnn}
-\end{figure}
-
-The RNN internals are similar to the multilayer perceptron: we update the hidden state via a non-linear function applied to a linear combination of $x_t$ and the previous hidden state $h_{t-1}$. Precisely,
-\begin{equation}
-	\label{eqn:elman-rnn}
-	h_t = \sigma(A x_t + Bh_{t-1} + c)
-\end{equation}
-where $\sigma$ is some non-linear function---we use the hyperbolic tangent because that is the default option in the \texttt{pytorch} package we use to implement our model. The model in \autoref{eqn:elman-rnn} is known as an Elman RNN.
-
-We also use two other forms of recurrent neural networks known as Gated Recurrent Units and Long Short Term Memory. These employ more complex internal logic that allow gradients to ``flow'' backwards more cleanly and enable events further in the past to have influence on the current hidden state. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite[\S 15.2.7]{PML} for a complete exposition.
-
-\subsection{The Complete Sport Sequence Model}
-\label{sec:complete-model}
-
-With all the pieces built up, we now describe our complete model.
-
-The raw event data is first fed into a multilayer perceptron, then passed into the recurrent layer to generate the hidden game state $h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}.
-
-\begin{figure}
-	\centering
-	\begin{tikzpicture}[
-			node distance = 1.5em and 3.5em,
-			->,
-			module/.style={ draw, rounded corners,
-					inner sep=10pt, outer sep=5pt},
-			every edge quotes/.style={fill=white, font=\small},
-		]
-
-		\node[module] (rnn1) {RNN};
-		\node[module, right = of rnn1] (rnn2) {RNN};
-		\node[module, right = of rnn2] (rnn3) {RNN};
-		\node[right = of rnn3] (rnn4) {$\cdots$};
-
-		\node[module, above = of rnn1] (mlpt1) {MLP\textsubscript{top}};
-		\node[module, above = of rnn2] (mlpt2) {MLP\textsubscript{top}};
-		\node[module, above = of rnn3] (mlpt3) {MLP\textsubscript{top}};
-
-		\node[left = of rnn1] (h0) {$h_0$};
-
-		\node[above = of mlpt1] (x1) {$x_1$};
-		\node[above = of mlpt2] (x2) {$x_2$};
-		\node[above = of mlpt3] (x3) {$x_3$};
-
-		\node[module, below = 1cm of rnn1] (mlpb1) {MLP\textsubscript{bot}};
-		\node[module, below = 1cm of rnn2] (mlpb2) {MLP\textsubscript{bot}};
-		\node[module, below = 1cm of rnn3] (mlpb3) {MLP\textsubscript{bot}};
-
-		\node[below = of mlpb1] (p1) {$\logit p_1$};
-		\node[below = of mlpb2] (p2) {$\logit p_2$};
-		\node[below = of mlpb3] (p3) {$\logit p_3$};
-
-		\draw (h0) -- (rnn1);
-		\draw (rnn1) edge["$h_1$"] (rnn2);
-		\draw (rnn2) edge["$h_2$"] (rnn3);
-		\draw (rnn3) edge["$h_3$"] (rnn4);
-
-		\draw (x1) -- (mlpt1);
-		\draw (x2) -- (mlpt2);
-		\draw (x3) -- (mlpt3);
-
-		\draw (mlpt1) -- (rnn1);
-		\draw (mlpt2) -- (rnn2);
-		\draw (mlpt3) -- (rnn3);
-
-		\draw (rnn1) edge["$h_1$"] (mlpb1);
-		\draw (rnn2) edge["$h_2$"] (mlpb2);
-		\draw (rnn3) edge["$h_3$"] (mlpb3);
-
-		\draw (mlpb1) -- (p1);
-		\draw (mlpb2) -- (p2);
-		\draw (mlpb3) -- (p3);
-	\end{tikzpicture}
-
-	\caption{Our network architecture.}
-	\label{fig:full-model}
-\end{figure}
-
-We experiment with several different levels of complexity for the two multilayer perceptrons and the recurrent component. Precisely, we vary the number of hidden layers in the MLPs as well as the dimension of the hidden state $h_t$. We also experiment with ``stacking'' RNN layers. In this configuration, the hidden states of first RNN layer serve as the input sequence for the second layer. We make our predictions from the second layer's hidden states. The five model ``sizes'' we test are given in \autoref{tbl:model-sizes}. Each of these sizes is tested with the simple Elman RNN as well as the more-complicated gated and LSTM recurrent units.
-
-\begin{table}
-	\begin{tabular}{r ccc}
-		\hline
-		Size        & RNN layers & $h_t$ dimension & MLP hidden layers  \\
-		\hline
-		\texttt{xs} & 1          & 32              & $\tuple{}$         \\
-		\texttt{sm} & 1          & 64              & $\tuple{64}$       \\
-		\texttt{md} & 1          & 128             & $\tuple{128}$      \\
-		\texttt{lg} & 2          & 128             & $\tuple{128, 128}$ \\
-		\texttt{xl} & 4          & 128             & $\tuple{128, 128}$ \\
-		\hline
-	\end{tabular}
-	\caption{The five model sizes ranging from \texttt{xs} to \texttt{xl}.}
-	\label{tbl:model-sizes}
-\end{table}
+One of the miracles of machine learning is how well this process scales \cite[\S 13 2.6]{PML}. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters.

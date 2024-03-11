@@ -3,7 +3,7 @@
 
 \subsection{Framing the Problem}
 
-The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events and output an estimate of the probability that the home team wins. This is a non-traditional statistics problem, and our analysis faces several challenges.
+The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events $\mathbf X_i = (\mathbf x_t)_{t \leq T_i}$ and output a sequence $\mathbf P_i = (p_t)_{t \leq T}$ estimating the probability that the home team wins at each time step. This is a non-traditional statistics problem, and our analysis faces several challenges.
 
 First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary classification techniques like logistic regression useless.
 
@@ -19,27 +19,27 @@ In order to handle these two issues, we resort to using neural networks.
 
 \subsection{Neural Networks}
 
-It's hard to define exactly what a neural network is: the term is used broadly to describe a large class of model characterized mostly by the method used to estimate the models' parameters: gradient descent via the backpropagation algorithm. In this paper, we focus on two specific types of neural networks: the multilayer perceptron (MLP) and the recurrent neural network (RNN). MLPs are a flexible classification and regression model that can handle our categorically-heavy input; RNNs enable our model to handle variable-length input \cite{PML}.
+It's hard to define exactly what a neural network is: the term is used broadly to describe a large class of model characterized mostly by the method used to estimate the models' parameters: gradient descent via the backpropagation algorithm. In this paper, we focus on two specific types of neural networks: the multilayer perceptron (MLP) \cite[\S 13.2.2]{PML} and the recurrent neural network (RNN) \cite[\S 15.2]{PML}. MLPs are a flexible classification and regression model that can handle our categorically-heavy input; RNNs enable our model to handle sequences.
 
-At a high level, our approach centers around maintaining a vector $h_t$ that represents the ``state of the game'' at a time $t$. At each time step, we use a recurrent neural network to update $h_t$ using the previous state $h_{t-1}$ and the current event $\mathbf x_t$. We then use this state $h_t$ to derive an estimate for the home team win probability using a multilayer perceptron. This approach is developed in detail in \autoref{sec:complete-model}, but first, we develop the necessary pieces.
+At a high level, our approach for predicting game winners centers around maintaining a vector $\mathbf h_t$ that represents the ``state of the game'' at a time $t$. At each time step, we use a recurrent neural network to update $\mathbf h_t$ using the previous state $\mathbf h_{t-1}$ and the current event $\mathbf x_t$. We then use this state $\mathbf h_t$ to derive an estimate for the home team win probability using a multilayer perceptron. This approach is developed in detail in \autoref{sec:complete-model}, but first, we describe the necessary pieces.
 
-This is \emph{not} a comprehensive treatment. There are many more types of neural networks, each of which is well-suited for a specific task. A few examples are convolutional neural networks (which are commonly used for image-related tasks), transformers (which power natural-language models like GPT) \cite{attention-is-all-you-need}, and generative adversarial networks (which have found recent fame due their ability to generate deep-fakes). Chapter 11 of \textcite{ESL} and Part III of \textcite{PML} provide excellent and statistically-motivated introductions to the subject.
+This is \emph{not} a comprehensive treatment of MLPs, RNNs, or deep learning in general. There are many more types of neural networks, each of which is well-suited for a specific task. A few examples are convolutional neural networks (which are commonly used for image-related tasks) \cite[\S 14]{PML}, transformers (which power natural-language models like GPT) \cite{attention-is-all-you-need}, and generative adversarial networks (which have found recent fame due their ability to generate deep-fakes) \cite[19.3.6.2]{PML}. Chapter 11 of \textcite{ESL} and Part III of \textcite{PML} provide excellent and statistically-motivated introductions to the subject.
 
 \subsection{The Multi-layer Perceptron}
 
 In this section, we describe the simplest non-trivial neural network known as a \emph{multi-layer perceptron} or \emph{feedforward neural network} \cite[\S 10.1]{ISL}, \cite[\S 11.3]{ESL}, \cite[13.2]{PML}. Very loosely, multilayer perceptrons are non-linear sandwiches on slices of linear bread; we use them as basic building blocks in several places for our final model.
 
-More precisely, in order to model a function $f : \R^n \to \R^m$, we introduce an intermediate space $\R^k$ called the \emph{hidden layer}. We first map our inputs $x$ into this intermediate space via a linear function $f_1(x) = x \mapsto Ax + b$ where $A$ is a $k \times n$ matrix and $b$ is a $k$-dimensional vector. We then apply a non-linear function $\sigma$ element-wise to our values in the intermediate space $\R^k$ before mapping back down to our output space $\R^m$ via a second linear transformation $f_2(x) = Cx$ where $C$ is an $m \times k$ matrix. In total, the multi-layer perceptron model equation is
+More precisely, in order to model a function $f : \R^n \to \R^m$, we introduce an intermediate space $\R^k$ called the \emph{hidden layer}. We first map our inputs $\mathbf z$ into this intermediate space via a linear function $f_1(\mathbf z) = A \mathbf z + \mathbf b$ where $A$ is a $k \times n$ matrix and $\mathbf b$ is a $k$-dimensional vector. We then apply a non-linear function $\sigma$ element-wise to our values in the intermediate space $\R^k$ before mapping back down to our output space $\R^m$ via a second linear transformation $f_2(\mathbf z) = C \mathbf z$ where $C$ is an $m \times k$ matrix. In total, the multi-layer perceptron model equation is
 \begin{equation}
 	\label{eqn:mlp}
-	f(x)
-	= f_2 \of \sigma \of f_1(x)
-	= C \, \sigma(Ax + b).
+	f(\mathbf z)
+	= f_2 \of \sigma \of f_1(\mathbf z)
+	= C \, \sigma(A\mathbf z + \mathbf z).
 \end{equation}
-The model's parameters are entries of the vector $b$ and the matrices $A$ and $C$.
+The model's parameters are entries of the vector $\mathbf b$ and the matrices $A$ and $C$.
 The dimension of the hidden space $k$ and the non-linear function $\sigma$ are model hyperparameters and are chosen in advance.
 
-In the world of deep learning, we typically refer $A$ and $C$ as \emph{weights} and $b$ as \emph{bias}. The function $\sigma$ is known as the \emph{activation function}. Historically, the most popular choices for $\sigma$ have been the sigmoid function
+In the world of deep learning, we typically refer $A$ and $C$ as \emph{weights} and $\mathbf b$ as \emph{bias}. The function $\sigma$ is known as the \emph{activation function}. Historically, the most popular choices for $\sigma$ have been the sigmoid function
 \begin{equation}
 	\sigma(x) = \frac{e^x}{1 + e^x}
 \end{equation}
@@ -47,7 +47,7 @@ and the hyperbolic tangent, $\tanh$. More recently the ``recified linear unit'' 
 \begin{equation}
 	{\rm ReLu}(x) = \max(x, 0)
 \end{equation}
-has become popular because it and its derivative are cheap and easy to compute \cite[\S 10.5]{ISL}, \cite[\S 13.3.2]{PML}. (The following section will reveal why this is relevant.) Plots of these three popular functions are shown in \autoref{fig:activation-functions}.
+has become popular because it and its derivative are cheap and easy to compute \cite[\S 10.5]{ISL}, \cite[\S 13.3.2]{PML}. (The following section will reveal why this is relevant.) These activation functions are always applied elementwise to their vector inputs, and plots of the three popular functions described above are given in \autoref{fig:activation-functions}.
 
 \begin{figure}[h]
 	\begin{tikzpicture}[baseline]
@@ -87,23 +87,23 @@ has become popular because it and its derivative are cheap and easy to compute \
 		layered layout, grow=right, level sep=6em, sibling sep=3em,
 		edges={->, gray}, nodes={inner sep = 1em}
 		]{
-		subgraph I_n [V={x_3, x_2, x_1}, name=input] -- [complete bipartite]
-		subgraph I_n [V={z_4, z_3, z_2, z_1}, name=hidden] (hidden) -- [complete bipartite]
-		subgraph I_n [V={y_2, y_1}, name=output]
+		subgraph I_n [V={z_3, z_2, z_1}, name=input] -- [complete bipartite]
+		subgraph I_n [V={u_4, u_3, u_2, u_1}, name=hidden] (hidden) -- [complete bipartite]
+		subgraph I_n [V={y}, name=output]
 		};
 
-		\node[above = 1em of hidden z_1] (hidden label) {\underline{Hidden layer}};
+		\node[above = 1em of hidden u_1] (hidden label) {\underline{Hidden layer}};
 		\node[left = of hidden label] {\underline{Input layer}};
 		\node[right = of hidden label] {\underline{Output layer}};
 	\end{tikzpicture}
 
-	\caption{A multi-layer perceptron with input dimension $3$, hidden dimension $4$, and output dimension $1$. We first map our input into a ``hidden layer'' via a linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map into our output space. Mathematically, each ``neuron'' in the hidden layer takes on the value $z_i = \sigma(a_{i1} x_1 + \cdots + a_{in} x_n + b_i)$ and the ``neurons'' in the output layer take the values $y_i = c_{i1} z_1 + \cdots + w_{ik} z_k$. The ``weights'' $\set{a_{ij}} \cup \set{b_{ij}}$ and ``biases'' $\set{b_i}$ are the model's parameters.}
+	\caption{A multi-layer perceptron with input dimension $3$, hidden dimension $4$, and output dimension $1$. We first map our input $\mathbf z = (z_1, z_2, z_3)$ into a ``hidden layer'' via a linear transformation. In the internal hidden layer, we apply a non-linear function element-wise before applying another linear transformation to map down to our output $y$. Mathematically, the ``neurons'' $\mathbf u = (u_1, \ldots, u_4)$ in the hidden layer take on the values $\mathbf u = \sigma(A\mathbf z + \mathbf b)$ and the ``neuron'' in the output layer takes the value $y = C\mathbf u$. The ``weights'' (the entries of $A$ and $C$) and ``biases'' (the entries of $\mathbf b$) are the model's parameters.}
 	\label{fig:mlp-diagram}
 \end{figure}
 
-This simple model is what is known as a \emph{universal function approximator}. In layman's terms, this means that for any function $g : \R^n \to \R^m$, there exist choices for $k$, $A$, $b$ and $C$ such that the multi-layer perceptron can approximate $g$ to any desired level of precision. More mathematically, for any continuous $g : K \to \R^m$ where $K \subseteq R^n$ is compact, there exists a sequence of functions $f_i$ of the form in \autoref{eqn:mlp} that uniformly converges to $g$. This property is true regardless of the choice of activation function, with the only condition being that $\sigma$ not be polynomial \cite[\S 13.2.5]{PML}.
+This simple model is what is known as a \emph{universal function approximator}. In layman's terms, this means that for any function $g : \R^n \to \R^m$, there exist choices for $k$, $A$, $\mathbf b$ and $C$ such that the multi-layer perceptron can approximate $g$ to any desired level of precision. More mathematically, for any continuous $g : K \to \R^m$ where $K \subseteq R^n$ is compact, there exists a sequence of functions $g_i$ of the form in \autoref{eqn:mlp} that uniformly converges to $g$. This property is true regardless of the choice of activation function, with the only condition being that $\sigma$ not be polynomial \cite[\S 13.2.5]{PML}.
 
-Although this universal flexibility in theory only requires a single hidden layer, the above theorem places no bound on $k$---the hidden layer's dimension. In practice, one can (and often does) increase the network's ``depth'' by including multiple hidden layers in order to limit the networks ``width'' \cite[\S 13.2.5]{PML}, \cite[10.2]{ISL}. The construction extends quite naturally from the setting with a single hidden layer: between each layer, we apply a linear transformation $x \mapsto Ax + b$. At each hidden layer, we apply an element-wise non-linearity $\sigma$.
+Although this universal flexibility in theory only requires a single hidden layer, the above theorem places no bound on $k$---the hidden layer's dimension. In practice, one can (and often does) increase the network's ``depth'' by including multiple hidden layers in order to limit the networks ``width'' \cite[\S 13.2.5]{PML}, \cite[10.2]{ISL}. (This is where the phrase deep learning comes from.) The construction extends quite naturally from the setting with a single hidden layer: between each layer, we apply a linear transformation. Within each layer, we apply an element-wise non-linearity.
 
 The phrase ``neural network'' makes a bit of sense when the input, hidden, and output spaces are laid out as in \autoref{fig:mlp-diagram}. Here, the elements of each space are thought of as ``neurons'' with the weights representing the strength of each neural connection.
 This connection with the human brain was apparently the inspiration for the conception of the multilayer perceptron in 1958, however the terms ``perceptron'' and ``neural network'' often receive criticism for exaggerating what is at best a tenuous connection \cite[\S 13.2.7]{PML}.
@@ -162,7 +162,7 @@ where $\sigma$ is some non-linear function, $\mathbf c$ is a vector, and $A$ and
 
 With all the pieces built up, we now describe our complete model.
 
-The raw event data $\mathbf x_t$ is first fed into a multilayer perceptron, then passed into the recurrent layer to generate the hidden game state $\mathbf h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}.
+The raw event data $\mathbf x_t$ is first fed into a multilayer perceptron, then passed into a recurrent layer to generate the hidden game state $\mathbf h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}.
 
 \begin{figure}
 	\centering
@@ -247,122 +247,128 @@ We experiment with several different levels of complexity for the two multilayer
 
 The model described in the previous section is quite complex, and our exposition of it left a big question unanswered: how do we find its parameters, i.e., the entries for the matrices in \autoref{eqn:mlp} and \autoref{eqn:elman-rnn}? The answer likes in a clever application of the chain rule known as backpropogation.
 
-To illustrate how neural networks parameters are estimated, we work through the simple case of a multi-layer perceptron, and then describe how this process extends quite naturally to more complicated networks like our complete model in the previous section. More thorough descriptions of the backpropgation algorithm and fitting neural network parameters are given in \textcite[\S 13.4]{PML}, \textcite[\S 11.4]{ESL}, and \textcite[10.7]{ISL}
+To illustrate how neural networks parameters are estimated, we work through the simple case of a multi-layer perceptron used for binary classification. We then describe how this process extends quite naturally to more complicated networks like our complete model in the previous section. More thorough descriptions of the backpropgation algorithm and fitting neural network parameters are given in \textcite[\S 13.4]{PML}, \textcite[\S 11.4]{ESL}, and \textcite[10.7]{ISL}
 
-To start, recall the model equation for a multi-layer perceptron on some input $z$:
+To start, we recall the model equation for a multi-layer perceptron on some input $\mathbf z$---this time wrapped in a sigmoid function so that the model outputs can be interpreted as probabilities:
 \begin{equation}
-	f(\mathbf z) = C \sigma (A\mathbf z + \mathbf b)
+	f(\mathbf z) = \sigma (C \sigma (A\mathbf z + \mathbf b)).
 \end{equation}
-where $A$ and $B$ are matrices, $b$ is a vector, and $\sigma$ is a non-linear activation function. We would like to find values for the entries of $A$, $\mathbf b$, and $C$ such that the output of our model $\hat f(\cdot)$ is as close as possible to the true values. To do this, we minimize some loss function $\ell$ with respect to a set of training data $\set{\mathbf z_i}$ with labels $\set{y_i}$
+Recall that $A$ and $C$ are matrices and $\mathbf b$ is a vector. We use the sigmoid function $\sigma$ as our a non-linear activation function. Our model outputs a single scalar that represents our estimate for the probability that $\mathbb z$ belongs in class $1$.
+
+To find good choices of $A$, $\mathbf b$, and $C$, we minimize a \emph{loss function} $\ell$ with respect to a set of training data $\set{\mathbf z_i}$ with binary labels $\set{y_i}$. (Think of linear regression where we minimize the sum of squares error.) Put mathematically, we would like to solve the following optimization problem:
 \begin{equation*}
 	\argmin_{A, \mathbf b, C} \sum_i \ell(\hat f(\mathbf z_i), y_i)
 \end{equation*}
-In the context of our sport sequence win prediction, the training data are sequences of events and the labels are binary indicator variables. For the sake of simplicity, we focus on the case when the inputs $\mathbf z_i$ are of a fixed dimension in this example.
-
-% TODO: does the model output logits or probabilities?
+In the context of our sport sequence win prediction, the training data are sequences of events and the labels are binary indicator variables representing the winning team. For the sake of simplicity, we focus on the case when the inputs $\mathbf z_i$ are of a fixed dimension in this example.
 
 In binary classification (our setting), we typically take the loss function to be the negative log likelihood
 \begin{equation}
 	\label{eqn:bce-loss}
-	\ell(\hat f(\mathbf z), y) = y \log \hat f(\mathbf z) + (1 - y) \log (1 - \hat f(\mathbf z)).
+	\ell(\hat f(\mathbf z), y) = - y \log \hat f(\mathbf z) - (1 - y) \log (1 - \hat f(\mathbf z)).
 \end{equation}
 In the deep learning literature, this loss function is known as \emph{binary cross-entropy}.
 
-Unlike with ordinary least squares, there is unfortunately no nice closed-form solution for a neural network's parameters that minimizes this loss function. Even worse, this objective function is not necessarily convex, so we can't use off-the-shelf convex optimization techniques like with many other models that use maximum likelihood estimation.
-Instead, we make initial (usually random) parameter assignments and gradually update them with tiny nudges---each of which decreases the total loss by a small amount. This process is called gradient descent.
-
-% TODO: transition?
-
-During what is known as the ``forward pass'' in which we compute $\hat f(\mathbf z)$, we keep track of intermediate values
-\begin{equation}
-	\begin{aligned}
-		\mathbf v_0 & = \mathbf z                                                   \\
-		\mathbf v_1 & = A\mathbf v_0        &  & = A \mathbf z,                     \\
-		\mathbf v_2 & = \mathbf v_1 + b     &  & = A\mathbf z  + \mathbf b,         \\
-		\mathbf v_3 & = \sigma(\mathbf v_2) &  & = \sigma(A\mathbf z  + \mathbf b), \\
-		\mathbf v_4 & = C \mathbf v_3       &  & = f(\mathbf z).
-	\end{aligned}
-\end{equation}
-This is shown graphically in \autoref{fig:mlp-computational-graph}
-In the ``backward pass'' we use these intermediate states and the chain rule to compute the derivative of the loss with respect to each of the models parameters.
-For example, the gradient of the MLP loss with respect to $C$ is
-\begin{equation*}
-	\frac{\partial \ell}{\partial C}
-	= \frac{\partial \ell}{\partial \mathbf z_4}
-	\frac{\partial \mathbf z_4}{\partial C}.
-\end{equation*}
-The crucial observation is that each of these partial derivatives on the right-hand-side of the equation is easily computable given the intermediate values computed in the forward pass.
-For example,
-
-We can compute
-\begin{equation}
-	\begin{aligned}
-		\frac{\partial \ell}{\partial C}
-		 & = \frac{\partial \ell}{\partial x_4}
-		\frac{\partial x_4}{\partial C} \\
-		&= \paren{}\paren{\mathbf v_4}
-	\end{aligned}
-\end{equation}
-Derivatives with respect to the other two parameter groups follow from the same process:
-\begin{equation*}
-	\frac{\partial \ell}{\partial b}
-	= \frac{\partial \ell}{\partial x_4}
-	\frac{\partial x_4}{\partial x_3}
-	\frac{\partial x_3}{\partial x_2}
-	\frac{\partial x_2}{\partial b},
-\end{equation*}
-\begin{equation*}
-	\frac{\partial \ell}{\partial A}
-	= \frac{\partial \ell}{\partial x_4}
-	\frac{\partial x_4}{\partial x_3}
-	\frac{\partial x_3}{\partial x_2}
-	\frac{\partial x_2}{\partial x_1}
-	\frac{\partial x_1}{\partial A}.
-\end{equation*}
-
-% TODO: give example of taking derivative of some loss function
-
-This process of computing gradients is known as \emph{backpropogation} and is the basis for training all neural networks. When we write out a neural network as a computational graph (\autoref{fig:mlp-computational-graph}), we can view backpropogation as a backwards traversal from the loss to the parameters, where at every step in the graph, we acquire an additional term in our gradient expression.
+Unlike with ordinary least squares, there is unfortunately no nice closed-form solution for a neural network's parameters that minimizes this loss function. Even worse, this objective function is not necessarily convex, so we can't use off-the-shelf convex optimization techniques like with many other models that use maximum likelihood estimation \cite[\S 13.4]{PML}.
+Instead, neural network parameters are chosen by what is known as \emph{gradient descent}: we make initial (usually random) parameter assignments and gradually update them with tiny nudges---each of which decreases the total loss by a small amount.
 
 \begin{figure}
 	\centering
+
 	\begin{tikzpicture}[
 			every edge quotes/.style = {below, font=\small}
 		]
 		\matrix [
-		matrix of math nodes,
-		column sep=3em,
-		row sep=3em,
-		nodes={anchor=center},
+			matrix of math nodes,
+			column sep=3em,
+			row sep=3em,
+			nodes={anchor=center},
 		] {
-		& |(A)|A        & |(b)| b &              & |(C)| C       & |(y)| y    &         \\
-		|(x)| x & |(t1)| \times & |(p)| + & |(s)| \sigma & |(t2)| \times & |(l)| \ell & |(L)| {\text{loss}} \\
+			                & |(A)|A        & |(b)| \mathbf b &              & |(C)| C       &               & |(y)| y    &                   \\
+			|(x)| \mathbf z & |(t1)| \times & |(p)| +         & |(s)| \sigma & |(t2)| \times & |(s2)| \sigma & |(l)| \ell & |(L)| \text{loss} \\
 		};
 
 		\draw[->] (x) -- (t1);
-		\draw[->] (t1) edge["$x_1$"] (p);
-		\draw[->] (p) edge["$x_2$"] (s);
-		\draw[->] (s) edge["$x_3$"] (t2);
-		\draw[->] (t2) edge["$x_4$"] (l);
-		\draw[->] (l) -- (L);
+		\draw[->] (t1) edge["$\mathbf v_1$"] (p);
+		\draw[->] (p) edge["$\mathbf v_2$"] (s);
+		\draw[->] (s) edge["$\mathbf v_3$"] (t2);
+		\draw[->] (t2) edge["$v_4$"] (s2);
+		\draw[->] (s2) edge["$v_5$"] (l);
+		\draw[->] (l) edge["$v_6$"] (L);
 
 		\draw[->] (A) -- (t1);
 		\draw[->] (b) -- (p);
 		\draw[->] (C) -- (t2);
 		\draw[->] (y) -- (l);
 	\end{tikzpicture}
-	\caption{The computational graph for the multilayer perceptron $C \sigma(Ax + b)$. Each leaf represents an input to our computation, and each internal node represents an operation applied to its children. We compute the gradient of the loss function with respect to the models parameters by ``stepping backwards'' through this graph from $\ell$ to the parameter of interest.}
+	\caption{The computational graph for the multilayer perceptron $f(\mathbf z) = \sigma(C \sigma(A\mathbf z +\mathbf b))$. Each leaf represents an input to our computation, and each internal node represents an operation applied to its children. We compute the gradient of the loss function with respect to the models parameters by ``stepping backwards'' through this graph from $\ell$ to the parameter of interest.}
 	\label{fig:mlp-computational-graph}
 \end{figure}
 
-With these gradients in hand, we update our original guesses
+In order to know how we should nudge our parameter assignments, we compute the partial derivatives of the loss function with respect to our parameter assignments using the backpropogation algorithm \cite[\S 13.3]{PML}. It has two steps.
+
+During what is known as the \emph{forward pass}, we compute $\hat f(\mathbf z)$ and keep track of intermediate values
 \begin{equation}
 	\begin{aligned}
-		A' & = A - \gamma \frac{\partial \ell}{\partial A}, \\
-		b' & = b - \gamma \frac{\partial \ell}{\partial b}, \\
-		C' & = C - \gamma \frac{\partial \ell}{\partial C},
+		\mathbf v_0 & = \mathbf z                                                     \\
+		\mathbf v_1 & = A\mathbf v_0        &  & = A \mathbf z,                       \\
+		\mathbf v_2 & = \mathbf v_1 + b     &  & = A\mathbf z  + \mathbf b,           \\
+		\mathbf v_3 & = \sigma(\mathbf v_2) &  & = \sigma(A\mathbf z  + \mathbf b),   \\
+		v_4         & = C \mathbf v_3       &  & = C \sigma(A\mathbf z  + \mathbf b), \\
+		v_5         & = \sigma(v_4)         &  & = f(\mathbf z).
 	\end{aligned}
 \end{equation}
-and by repeating this process enough times, one arrives as what is typically a good parameter estimate. In practice, this process of computing gradients and updating parameter assignments is done automatically by a software library (we use \texttt{pytorch} \cite{pytorch}).
+We then compute the loss
+\begin{equation}
+	\begin{aligned}
+		v_6
+		 & = \ell (v_5, y)                         \\
+		 & = - y \log v_5 - (1 - y) \log (1 - v_5)
+	\end{aligned}
+\end{equation}
+where $y$ is the corresponding binary label for $\mathbf z$.
+In deep learning, this process is often shown graphically in what is called a computational graph. The computational graph for $f$ is shown in \autoref{fig:mlp-computational-graph}.
 
-One of the miracles of machine learning is how well this process scales \cite[\S 13 2.6]{PML}. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters.
+In the \emph{backward pass} we use these intermediate states and the chain rule to compute the derivative of the loss with respect to each of the models parameters.
+For example, the gradient of $\ell$ loss with respect to $C$ is
+\begin{equation}
+	\begin{aligned}
+		\frac{\partial \ell}{\partial C}
+		 & = \frac{\partial v_6}{\partial C} \\
+		 & = \frac{\partial v_4}{\partial C}
+		\frac{\partial v_5}{\partial v_4}
+		\frac{\partial \ell}{\partial v_5}.
+	\end{aligned}
+\end{equation}
+It's often helpful to view this application of the chain rule as a backwards traversal in the computational graph (\autoref{fig:mlp-computational-graph}) from the loss to the parameters. At every step, we acquire an additional multiplicative term in our gradient expression.
+
+The crucial observation is that each of these partial derivatives on the right-hand-side of the equation is easily computable given the intermediate values computed in the forward pass.
+For the sigmoid non-linearity layer, one can verify that
+\begin{equation}
+	\frac{\partial v_5}{\partial v_4}
+	= \frac{\partial \sigma(v_4)}{\partial v_4}
+	= \sigma(v_4) \paren{1 - \sigma(v_4)}
+	= v_5 \paren{1 - v_5}
+\end{equation}
+and for the binary cross entropy loss layer, we have
+\begin{equation}
+	\frac{\partial \ell}{\partial v_5} = \frac{1 - y}{1 - v_5} - \frac{y}{v_5}.
+\end{equation}
+Computing the partial derivative of the linear layer where we multiply by $C$ is not complicated, but it's a bit tedious and requires knowledge of high-dimensional vector calculus, so we omit it from our paper. It can be found in section 13.3.3.3 of \textcite{PML} along with derivations of the Jacobians for other common neural network layers. (Thankfully, in practice there are software packages to do the differentiation for us.)
+
+Multiplying the partial derivatives we just computed gives $\frac{\partial \ell}{\partial C}$, and the quantities $\frac{\partial \ell}{\partial A}$ and $\frac{\partial \ell}{\partial \mathbf b}$ can be computed in an identical fashion. With these gradients in hand, we can nudge our parameter assignments a tiny amount:
+\begin{equation}
+	\begin{aligned}
+		A'         & = A - \gamma \frac{\partial \ell}{\partial A},                 \\
+		\mathbf b' & = \mathbf b - \gamma \frac{\partial \ell}{\partial \mathbf b}, \\
+		C'         & = C - \gamma \frac{\partial \ell}{\partial C},
+	\end{aligned}
+\end{equation}
+where $\gamma$ is some small constant called the \emph{learning rate}. We then repeat this process of computing gradients and updating parameters a large number of times.
+
+To determine when to stop iterating, we withhold a portion of our data from training (typically 20 percent) and after each iteration of gradient descent (called an epoch), we evaluate our model's performance on this validation set.
+If we reach a point in our training loss continues to decrease, but the validation performance stops improving we say that our model has \emph{overfit}, i.e., learned patterns that are in the training data by chance and are not indicative of a real relationship.
+This is the point at which we terminate training \cite[\S 10.7.2]{ISL}, \cite[\S 13.5.1]{PML}.
+
+This was admittedly a toy example, and in practice, the process of computing gradients and updating parameter assignments is done automatically by a software library. There are many options, but we choose to use \texttt{pytorch} \cite{pytorch} for this project due to its modularity and its popularity in the research community. It's also common to use a more elaborate gradient descent technique than the one described here (we use Adam \cite{adam} to train our model) and to ``batch'' input in order to more efficiently utilize parallel computing during the training phase (we use a batch size of 500) \cite[\S 10.7.2]{ISL}.
+
+One of the miracles of machine learning is how well this backpropogation algorithm scales \cite[\S 13.2.6]{PML}. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters. Although in principle, loss functions are non convex and gradient descent may get stuck in local minima, this tends not to happen in practice. It's still not entirely understood why this is the case \cite[\S 13.4]{PML}.

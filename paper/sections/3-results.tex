@@ -1,18 +1,15 @@
 \section{Results}
 
-We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library \cite{pytorch}. Code and instructions for reproducing these results are available on GitHub \cite{stat-comps-github}. To train our model, we use the binary cross-entropy loss function where each output $p_t$ is compared to the true outcome of the game
+We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library \cite{pytorch}. Code and instructions for reproducing these results are available on GitHub \cite{stat-comps-github}. To train our model, we use the binary cross-entropy loss function described in the previous section where the sequence of predicted win probabilities at each time step $\mathbf P_i = (p_t)$ is compared element-wise to the true outcome of the game
 \begin{equation}
-	y = \begin{cases}
+	y_i = \begin{cases}
 		1 & \text{if the home team wins}  \\
 		0 & \text{if the away team wins}.
 	\end{cases}
 \end{equation}
-We fit our models using gradient descent via backpropogation with respect to this loss function.
+We fit our models using via backpropogation with respect to this loss function, summed over all time steps in the sequence. We use the PyTorch implementation of the Adam optimizer \cite{adam} to perform gradient descent and use a batch size of 500.
 
-To measure our model's performance, we use what is known as \emph{cross-validation}, a model evaluation technique in which we measure model fitness based on how well it performs on data that was not used during the training phase.
-More precisely, we split our data into two subsets known as the \emph{training} and \emph{validation} (or \emph{test}) subsets---typically one uses an 80-20 percent split. We fit our model only on the training subset and then measure its performance on the validation subset. If the training performance exceeds the validation performance by a significant margin, we say that our model has \emph{overfit}, i.e., learned patterns that are in the training data by chance and are not indicative of a real relationship.
-
-The results of our model training are given in \autoref{tbl:model-results}. The training/validation curves (performance as a function of training time) for each model are shown in \autoref{fig:training-curves}.
+The results of our model training are given in \autoref{tbl:model-results}. We report the model performance on both the training and validation data, although we see little sign of overfitting as is evidenced by the similar performance on training and validation data in \autoref{tbl:model-results} as well as the training/validation curves in \autoref{fig:training-curves}.
 
 \begin{table}
 	\begin{tabular}{r l  ccccc}
@@ -38,13 +35,21 @@ The results of our model training are given in \autoref{tbl:model-results}. The 
 		         & xl   & 13    & 0.4984                                   & 0.7392                                     & 0.5109 & 0.7385   \\
 		\hline
 	\end{tabular}
-	\caption{The performance of our various models, taken at the epoch (round of training) in which validation accuracy is maximized. Because there is no notion of a ``positive'' and ``negative'' label in our classification problem, we do not evaluate our models' precision.}
+	\caption{The performance of our various models, taken at the epoch (round of training) in which validation accuracy is maximized. The RNN types and model sizes are described in \autoref{sec:complete-model} and \autoref{tbl:model-sizes}. Because there is no notion of a ``positive'' and ``negative'' label in our classification problem, we do not evaluate our models' precision.}
 	\label{tbl:model-results}
 \end{table}
 
+\begin{figure}
+	\centering
+	\input{figures/training_curves.tikz}
+	\caption{Training and validation accuracy for each model over the training period.}
+	\label{fig:training-curves}
+\end{figure}
+
 At first, these results are quite encouraging: Every model achieves a validation accuracy of at least 73 percent, and the complex models do not seem to provide any meaningful boost in performance. However, the larger models do appear to converge more quickly (\autoref{fig:training-curves}). No model appears to suffer from overfitting.
 
-However, the fanfare fades when we realize that the simple classifier that predicts the currently-ahead team to win has an accuracy of 73.143 percent. All of our models do slightly out-perform this, but without something like an $F$-statistic, it's difficult to say whether this is a meaningful improvement.
+However, the fanfare fades when we realize that the simple classifier that predicts the currently-ahead team to win has an accuracy of 73.143 percent \cite{stat-comps-github}. All of our models do slightly out-perform this, but without something like an $F$-statistic, it's difficult to say whether this is a meaningful improvement.
+
 Examining the Shapley values\footnote{Shapley values are a game-theory based approach that adds random noise to samples in order to estimate the influence of each predictor on a model's outcome} \cite{captum, shap-paper} for the model with the best validation accuracy (Elman RNN, medium size) indicates that our complex neural networks have learned to focus almost entirely on each teams' score (\autoref{fig:model-shap-values}).
 We discuss the implications and potential causes of this in the following section.
 

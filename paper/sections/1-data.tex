@@ -17,16 +17,6 @@ We are left with 3,040,524 events, about a third of which represent shot attempt
 
 The three million events in our data set are distributed fairly normally across 6,600 games with a mean of $461$ events per game and a standard deviation of $33.7$. The shortest game consists of $348$ events and the longest has length $695$. The complete distribution of game lengths has a slight right skew and is shown in \autoref{fig:events-per-game}. The distribution of events within each game is fairly uniform except for the presence of a large peak at the end of the fourth quarter corresponding to the rush of fouling, time-outs, and last-second shots at the end of a game.
 
-\subsection{Notation}
-
-Throughout the paper, we use the notation $\mathbf X_i = \paren{\mathbf x_t}_{t \leq T_i}$ to refer to a particular game $\mathbf X_i$ represented by a sequence of events $\mathbf x_t$. The variable $T_i$ is the length of the $i$th sequence. We encode the $i$th response variable (the game winner) using the indicator variable
-\begin{equation}
-	y_i = \begin{cases}
-		1 & \text{if the home team wins}  \\
-		0 & \text{if the away team wins}.
-	\end{cases}
-\end{equation}
-
 \begin{table}[p]
 	\ttfamily \footnotesize
 	\begin{tabular}{ccc}

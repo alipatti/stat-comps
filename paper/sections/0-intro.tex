@@ -3,3 +3,19 @@
 This paper is based on the following hunch: Summary stats don't fully capture the state of basketball games. It is often the case that---despite a game being tied---there is one team that is ``playing better'' and most fans watching the game would expect to win. This paper attempts to capture this idea by modeling sports games as sequences of \emph{events}, for example shots and rebounds. Over the course of this paper, we develop a model that, after each event, output a probability $p_t$ that the home team will ultimately win. We then train several variants of this model, evaluate their performance, and attempt to explain why they don't do as well as we had originally hoped.
 
 % TODO: beef this up
+
+\subsection{Notation}
+
+Throughout this paper, we use capital letters like $A$ to represent matrices, boldface lowercase letters like $\mathbf b$ to represent vectors, and lowercase letters like $p$ to represent scalars. We use the subscript $t$ to denote a time series (e.g. $p_t$) and the subscript $i$ otherwise.
+
+For our data specifically, we use the notation $\mathbf X_i = \paren{\mathbf x_t}_{t \leq T_i}$ to refer to a particular game $\mathbf X_i$ represented by a sequence of events $\mathbf x_t$. (The variable $T_i$ is the length of the $i$th sequence.) We encode the $i$th response variable (the winner of the $i$th game) using the binary indicator variable
+\begin{equation}
+	y_i = \begin{cases}
+		1 & \text{if the home team wins}  \\
+		0 & \text{if the away team wins}.
+	\end{cases}
+\end{equation}
+Our model output
+
+Our model $\mathbf P_i = (p_t)_{t \leq T}$
+

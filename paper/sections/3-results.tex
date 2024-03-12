@@ -1,6 +1,6 @@
 \section{Results}
 
-We implement our model (\autoref{fig:full-model}) using the \texttt{pytorch} python library \cite{pytorch}. Code and instructions for reproducing these results are available on GitHub \cite{stat-comps-github}. To train our model, we use the binary cross-entropy loss function described in the previous section where the sequence of predicted win probabilities at each time step $\mathbf P_i = (p_t)$ is compared element-wise to the true outcome of the game
+We implement our model (\autoref{fig:full-model}) using the PyTorch python library \cite{pytorch}. Code and instructions for reproducing these results are available on GitHub \cite{stat-comps-github}. To train our model, we use the binary cross-entropy loss function described in the previous section where the sequence of predicted win probabilities at each time step $\mathbf P_i = (p_t)$ is compared element-wise to the true outcome of the game
 \begin{equation}
 	y_i = \begin{cases}
 		1 & \text{if the home team wins}  \\

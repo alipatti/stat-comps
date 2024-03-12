@@ -5,15 +5,14 @@ Our analysis focuses on NBA play-by-play data from between 2015 and 2021. The ra
 \subsection{Cleaning}
 
 Before feeding these events into our model, we do a bit of cleaning. First, we remove columns related to team or player information, for example, the names of the teams playing or the player who is taking the shot. At the moment, our model does not take these factors into account.
-% TODO: talk about response and number of columns of different types (categorical, numeric, etc.)
-We are left with ??? columns, of which ??? are numeric and ?? are catigorical.
-Numeric columns include the current score for each team, the time left, and the distance from which a shot was taken.
-Examples of categorical variables include the type of shot (jump shot, dunk, etc), the type of rebound (offensive vs defensive), and the type of foul.
-In order to pass the categorical variables into our modeo, we dummy encode them using 1-hot scheme as is typically done in regression. After doing this, we are left with 69 numeric columns, the full list of which is given in \autoref{tbl:list-of-columns}.
+We are left with 12 columns, of which 4 are numeric and 8 are categorical.
+The numeric columns are the current score for each team, the time left, and the distance from which a shot was taken.
+Examples of categorical variables include the type of shot (jump shot, dunk, etc), the type of rebound (offensive vs defensive), and the type of foul (shooting foul, charge, etc).
+In order to pass the categorical variables into our model, we dummy encode them using 1-hot scheme as is typically done in regression. After doing this, we are left with 69 numeric columns, the full list of which is given in \autoref{tbl:list-of-columns}.
 
 \subsection{EDA}
 
-We are left with 3,040,524 events, about a third of which represent shot attempts. Rebounds and free throws combine for roughly another third of the events, with fouls, turnovers, and other violations making up the remainder. The exact numbers of events per type is given in \autoref{tbl:events-by-type}.
+Our cleaned data set consists of 3,040,524 events, about a third of which represent shot attempts. Rebounds and free throws combine for roughly another third of the events, with fouls, turnovers, and other violations making up the remainder. The exact numbers of events per type is given in \autoref{tbl:events-by-type}.
 
 The three million events in our data set are distributed fairly normally across 6,600 games with a mean of $461$ events per game and a standard deviation of $33.7$. The shortest game consists of $348$ events and the longest has length $695$. The complete distribution of game lengths has a slight right skew and is shown in \autoref{fig:events-per-game}. The distribution of events within each game is fairly uniform except for the presence of a large peak at the end of the fourth quarter corresponding to the rush of fouling, time-outs, and last-second shots at the end of a game.
 

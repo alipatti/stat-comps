@@ -32,6 +32,16 @@ To address the vanishing gradient problem, it would interesting to see how the t
 
 There is more data available if that ends up being a bottleneck: The dataset used for this project ends in 2021, and the play-by-play scraping script \cite{pbp-scraper-github} could easily be used to scrape more recent games.
 
-\subsubsection{Feeding our network different data}
+\subsubsection{Limiting the data fed to our network}
 
 Given that our model focuses so obsessively on the current game score, it could be interesting to remove the score columns from the data fed to the network in order to force the model to learn to track the score itself in the hidden state. It's possible that this could push the network to learn a more nuanced understanding of the game. It's also possible that this could break everything.
+
+\subsection{Incorperating player and team information}
+
+A final direction for future work would be to somehow incorporate information about the teams in each game and the players involved in each event. These are obviously important factors, and bringing them into our model could be done in a few ways:
+\begin{enumerate}
+	\item Append a learnable embedding \cite[\S 13.2.4.3]{PML} to each event coresponding to the player responsible (e.g., the shooter, rebounder, etc). This could have the desirable side effects of generating embeddings for individual players, which could be useful in their own right for player comparison.
+	\item Initialize the hidden state $\mathbf h_0$ using information about teams' previous performance. One way this could be done is to use a simple feedforward network to embed stats like shooting percenage, points for, points against, etc. This embedding would be learned along with rest of the network parameters.
+	\item Use a non-sequencial binary classifier to estimate the win probability for each team before the game even begins. Then, use this prediction as a prior probability to weight the loss function in our sequencial model as is described in \textcite[beginning of \S 13.4]{PML}.
+\end{enumerate}
+

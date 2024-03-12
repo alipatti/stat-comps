@@ -1,12 +1,18 @@
 \section{Introduction}
 
-This paper is based on the following hunch: Summary stats don't fully capture the state of basketball games. It is often the case that---despite a game being tied---there is one team that is ``playing better'' and most fans watching the game would expect to win. This paper attempts to capture this idea by modeling sports games as sequences of \emph{events}, for example shots and rebounds. Over the course of this paper, we develop a model that, after each event, output a probability $p_t$ that the home team will ultimately win. We then train several variants of this model, evaluate their performance, and attempt to explain why they don't do as well as we had originally hoped.
+This paper is based on the following hunch: Summary stats don't fully capture the state of basketball games. It is often the case that---despite a game being tied---there is one team that is ``playing better'' and most fans watching the game would expect to win. This paper attempts to capture this idea by modeling sports games as sequences of \emph{events}, for example shots and rebounds. Over the course of this paper, we develop a model that takes as input a sequence of game events like shots, rebounds, and fouls. After each event, our model outputs a probability that the home team will ultimately win. We then train several variants of this model, evaluate their performance, and attempt to explain why they don't do as well as we had originally hoped.
 
-% TODO: beef this up
+\subsection{Previous work}
+
+There is a long history of statistics in sports, and this is certainly not the first work that attempts to predict game winners. The NBA in particular has been a popular object of study, but most previous work \cite{nba-win-pred-1, nba-win-pred-2, nba-win-pred-3} focuses on predicting game winners \emph{before} the game has started. There is little to no academic literature on predicting the result of in-progress games.
+
+Many online sports services and TV providers like ESPN and Yahoo Sports do provide live win probabilities for in-progress games \cite{espn-win-probability, opta-win-probability}, but they use proprietary models, and it's not clear how the probabilities are generated. Recurrent neural networks have also been used before to predict winners of soccer games, but only through viewing seasons of competition as sequences of games \cite{lstm-soccer-paper}, not through viewing games as sequences of events. To the best of the authors' knowledge, this is the first work that attempts to model sports games themselves as sequences of events using recurrent neural networks or any other statistical model.
+
+There is also significant application of this work to sports betting. Currently, most online bookies \cite{draftkings-live} allow users to place bets on ongoing games, so a model with accurate in-game win prediction could lead to better setting of odds (or the opportunity to make a lot of money by outperforming the house, depending on who your employer is).
 
 \subsection{Notation}
 
-Throughout this paper, we use capital letters like $A$ to represent matrices, boldface lowercase letters like $\mathbf b$ to represent vectors, and lowercase letters like $p$ to represent scalars. We use the subscript $t$ to denote a time series (e.g. $p_t$) and the subscript $i$ otherwise.
+Throughout this paper, we use capital letters like $A$ to represent matrices, boldface lowercase letters like $\mathbf b$ to represent vectors, and lowercase letters like $p$ to represent scalars. We use the subscript $t$ to denote a time series (e.g. $p_t$) and the subscript $i$ otherwise. Boldface capital letters like $\mathbf X$ are used to represent sequences.
 
 For our data specifically, we use the notation $\mathbf X_i = \paren{\mathbf x_t}_{t \leq T_i}$ to refer to a particular game $\mathbf X_i$ represented by a sequence of events $\mathbf x_t$. (The variable $T_i$ is the length of the $i$th sequence.) We encode the $i$th response variable (the winner of the $i$th game) using the binary indicator variable
 \begin{equation}
@@ -15,7 +21,5 @@ For our data specifically, we use the notation $\mathbf X_i = \paren{\mathbf x_t
 		0 & \text{if the away team wins}.
 	\end{cases}
 \end{equation}
-Our model output
-
-Our model $\mathbf P_i = (p_t)_{t \leq T}$
+On input $\mathbf X_i$, our models output sequences $\mathbf P_i = (p_t)_{t \leq T_i}$ where $p_t$ is the predicted probability that the home team will win, given the events up to time $t$. (If helpful, one can think of our models as performing $T_i$ simultaneous binary classifications on truncated sequences of length $1$ through $T_i$.)
 

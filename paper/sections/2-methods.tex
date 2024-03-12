@@ -5,7 +5,7 @@
 
 The goal of our analysis is to develop a model that predicts the winners of in-progress basketball games. Precisely, we would like our model to take as input a sequence of events $\mathbf X_i = (\mathbf x_t)_{t \leq T_i}$ and output a sequence $\mathbf P_i = (p_t)_{t \leq T}$ estimating the probability that the home team wins at each time step. This is a non-traditional statistics problem, and our analysis faces several challenges.
 
-First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary classification techniques like logistic regression useless.
+First, the input to our classification has variable dimension. Although the individual events have constant dimension (69), the number of events per sequence varies widely. For example, making a prediction at the end of the first quarter may require only looking at 100 or so events, whereas a prediction with two minutes left in the fourth quarter may require looking at four or five times that many. This renders classic binary classification techniques like logistic regression useless \cite[\S 4.4]{ESL}.
 
 This sequential aspect of our data makes our problem smell like it could benefit from a time-series approach \cite[ch. 4, 5]{TSA}, however classic time-series techniques like ARIMA are not appropriate for a few reasons:
 \begin{enumerate}
@@ -13,7 +13,7 @@ This sequential aspect of our data makes our problem smell like it could benefit
 	\item ARIMA (and most other) models attempt to predict the next value in a sequence. For us, this would correspond to predicting the next event in the game, which is not the goal of our analysis.
 \end{enumerate}
 
-The second big challenge is that our data consists mainly of categorical variables with very few numeric columns, making techniques like support vector classifiers less appropriate \cite[\S 9]{ISL}. A popular approach for categorically-heavy data is to use a tree-based method like random forests, often combined with an ensemble tools like bagging and boosting \cite[\S 9, \S 10]{ESL}. However, it was not clear how to adapt these methods in order to handle our sequential input.
+The second big challenge is that our data consists mainly of categorical variables with few numeric columns, making techniques like support vector classifiers less appropriate \cite[\S 9]{ISL}. A popular approach for categorically-heavy data is to use a tree-based method like random forests, often combined with an ensemble tools like bagging and boosting \cite[\S 9, \S 10]{ESL}. However, it was not clear how to adapt these methods in order to handle our sequential input.
 
 In order to handle these two issues, we resort to using neural networks.
 
@@ -43,7 +43,7 @@ In the world of deep learning, we typically refer $A$ and $C$ as \emph{weights} 
 \begin{equation}
 	\sigma(x) = \frac{e^x}{1 + e^x}
 \end{equation}
-and the hyperbolic tangent, $\tanh$. More recently the ``recified linear unit'' function
+and the hyperbolic tangent, $\tanh$ \cite[\S 10.1]{ISL}. More recently the ``rectified linear unit'' function
 \begin{equation}
 	{\rm ReLu}(x) = \max(x, 0)
 \end{equation}
@@ -144,7 +144,7 @@ This connection with the human brain was apparently the inspiration for the conc
 	\label{fig:simple-rnn}
 \end{figure}
 
-Although the multilayer perceptron described in the previous section is quite powerful, it has a notable drawback that prevents us from applying it directly to our problem: MLPs can only handle input of a fixed dimension. Recall that our goal is to develop a model that takes in an in-progress game represented as a sequence of the form $(\mathbf x_1, \ldots, \mathbf x_t)$ and outputs a probability $p_t$ that the home team wins. Although each event $\mathbf x_t$ is of a constant dimension, the win probability depends on much more than just a single event. In fact, $p_t$ depends on \emph{all} the preceding events $\mathbf x_1, \ldots, \mathbf x_t$.
+Although the multilayer perceptron described in the previous section is quite powerful, it has a notable drawback that prevents us from applying it directly to our problem: MLPs can only handle input of a fixed dimension. Recall that our goal is to develop a model that takes in an in-progress game represented as a sequence of the form $(\mathbf x_1, \ldots, \mathbf x_t)$ and outputs a probability $p_t$ that the home team will win. Although each event $\mathbf x_t$ is of a constant dimension, the win probability depends on much more than just a single event. In fact, $p_t$ depends on \emph{all} the preceding events $\mathbf x_1, \ldots, \mathbf x_t$.
 
 In order to enable past events to influence present predictions, one common approach is to maintain a ``hidden state'' vector $\mathbf h_t$ that one can think of as capturing the essence of the sequence up to time $t$. We continually update $\mathbf h_t$ with new events as they occur, as is shown in \autoref{fig:simple-rnn}.
 % To derive the predicted win probability, we use a multilayer perceptron $\mathbf h_t$.
@@ -155,14 +155,14 @@ The RNN internals are similar to the multilayer perceptron: we update the hidden
 	\label{eqn:elman-rnn}
 	h_t = \tanh (A \mathbf x_t + B \mathbf h_{t-1} + \mathbf c)
 \end{equation}
-where $\sigma$ is some non-linear function, $\mathbf c$ is a vector, and $A$ and $B$ are matrices. We use the hyperbolic tangent because that is the default option in the \texttt{pytorch} package we use to implement our model \cite{pytorch}. We also use two other forms of recurrent neural networks known as Gated Recurrent Units \cite[\S 15.2.7.1]{PML} and Long Short Term Memory \cite[\S 10.5.1]{ISL}, \cite[\S 15.2.7.2]{PML}. These employ complex internal logic that enables events further in the past to have more influence on the current hidden state \cite[\S 15.2.6]{PML}. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite[\S 15.2.7]{PML} for a complete exposition.
+where $\sigma$ is some non-linear function, $\mathbf c$ is a vector, and $A$ and $B$ are matrices. We use the hyperbolic tangent because that is the default option in the PyTorch package we use to implement our model \cite{pytorch}. We also use two other forms of recurrent neural networks known as Gated Recurrent Units \cite[\S 15.2.7.1]{PML} and Long Short Term Memory \cite[\S 10.5.1]{ISL}, \cite[\S 15.2.7.2]{PML}. These employ complex internal logic that enables events further in the past to have more influence on the current hidden state \cite[\S 15.2.6]{PML}. Explaining the precise internals of these two RNN types is outside the scope of this paper. See \textcite[\S 15.2.7]{PML} for a complete exposition.
 
 \subsection{The Complete Sport Sequence Model}
 \label{sec:complete-model}
 
 With all the pieces built up, we now describe our complete model.
 
-The raw event data $\mathbf x_t$ is first fed into a multilayer perceptron, then passed into a recurrent layer to generate the hidden game state $\mathbf h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}.
+Each event in a game sequence $\mathbf X_i = (\mathbf x_t)$ is first fed into a multilayer perceptron before being passed into a recurrent layer to generate the hidden game state $\mathbf h_t$. This game state is then mapped through another multilayer perceptron to generate the win probability logits. This model structure is shown graphically in \autoref{fig:full-model}, and we initialize $\mathbf h_0$ randomly as is suggested by the PyTorch package and the literature \cite{PML}.
 
 \begin{figure}
 	\centering
@@ -223,7 +223,7 @@ The raw event data $\mathbf x_t$ is first fed into a multilayer perceptron, then
 	\label{fig:full-model}
 \end{figure}
 
-We experiment with several different levels of complexity for the two multilayer perceptrons and the recurrent component. Precisely, we vary the number and dimension of hidden layers in the MLPs as well as the dimension of the hidden state $\mathbf h_t$. We also experiment with ``stacking'' RNN layers. In this configuration, the hidden states of first RNN layer serve as the input sequence for the second layer. We make our predictions from the second layer's hidden states. The five model ``sizes'' we test are given in \autoref{tbl:model-sizes}. Each of these sizes is tested with the simple RNN (\autoref{eqn:elman-rnn}) as well as the more-complicated gated and LSTM recurrent units.
+We experiment with several different levels of complexity for the two multilayer perceptrons and the recurrent component. Precisely, we vary the number and dimension of hidden layers in the MLPs as well as the dimension of the hidden state $\mathbf h_t$. We also experiment with ``stacking'' RNN layers. In this configuration, the hidden states of first RNN layer serve as the input sequence for the second layer. We make our predictions from the second layer's hidden states. The five model ``sizes'' we test are given in \autoref{tbl:model-sizes}. Each of these sizes is tested with the simple RNN (\autoref{eqn:elman-rnn}) as well as the more-complicated gated and LSTM recurrent units. The performance of these models is discussed in the following section.
 
 \begin{table}
 	\begin{tabular}{r ccc}
@@ -243,30 +243,28 @@ We experiment with several different levels of complexity for the two multilayer
 
 \subsection{Estimating Network Parameters}
 
-% TODO: add citations to this section
+The model described in the previous subsection is quite complex, and our exposition of it left a big question unanswered: how do we find its parameters, i.e., the entries for the matrices in the MLP and recurrent layers (\autoref{eqn:mlp} and \autoref{eqn:elman-rnn})? The answer likes in a clever application of the chain rule known as backpropogation.
 
-The model described in the previous section is quite complex, and our exposition of it left a big question unanswered: how do we find its parameters, i.e., the entries for the matrices in \autoref{eqn:mlp} and \autoref{eqn:elman-rnn}? The answer likes in a clever application of the chain rule known as backpropogation.
+To illustrate how neural networks parameters are estimated, we work through the simple case of a multi-layer perceptron used for binary classification. We then describe how this process extends quite naturally to more complicated networks like our complete model in the previous section. More thorough descriptions of the backpropgation algorithm and fitting neural network parameters are given in \textcite[\S 13.4]{PML}, \textcite[\S 11.4]{ESL}, and \textcite[\S 10.7]{ISL}
 
-To illustrate how neural networks parameters are estimated, we work through the simple case of a multi-layer perceptron used for binary classification. We then describe how this process extends quite naturally to more complicated networks like our complete model in the previous section. More thorough descriptions of the backpropgation algorithm and fitting neural network parameters are given in \textcite[\S 13.4]{PML}, \textcite[\S 11.4]{ESL}, and \textcite[10.7]{ISL}
-
-To start, we recall the model equation for a multi-layer perceptron on some input $\mathbf z$---this time wrapped in a sigmoid function so that the model outputs can be interpreted as probabilities:
+To start, we recall the model equation for a multi-layer perceptron on some input $\mathbf z$---this time wrapped in a sigmoid function so that the model outputs can be interpreted as probabilities for binary classification:
 \begin{equation}
 	f(\mathbf z) = \sigma (C \sigma (A\mathbf z + \mathbf b)).
 \end{equation}
-Recall that $A$ and $C$ are matrices and $\mathbf b$ is a vector. We use the sigmoid function $\sigma$ as our a non-linear activation function. Our model outputs a single scalar that represents our estimate for the probability that $\mathbb z$ belongs in class $1$.
+Recall that $A$ and $C$ are matrices and $\mathbf b$ is a vector. We use the sigmoid function $\sigma$ as our a non-linear activation function. Our model outputs a single scalar that represents our estimate for the probability that $\mathbf z$ belongs in class $1$.
 
 To find good choices of $A$, $\mathbf b$, and $C$, we minimize a \emph{loss function} $\ell$ with respect to a set of training data $\set{\mathbf z_i}$ with binary labels $\set{y_i}$. (Think of linear regression where we minimize the sum of squares error.) Put mathematically, we would like to solve the following optimization problem:
 \begin{equation*}
 	\argmin_{A, \mathbf b, C} \sum_i \ell(\hat f(\mathbf z_i), y_i)
 \end{equation*}
-In the context of our sport sequence win prediction, the training data are sequences of events and the labels are binary indicator variables representing the winning team. For the sake of simplicity, we focus on the case when the inputs $\mathbf z_i$ are of a fixed dimension in this example.
+In the context of our sport sequence win prediction, the training data are sequences of events and the labels are binary indicator variables representing the winning team, but for the sake of simplicity, we focus on the case when the inputs $\mathbf z_i$ are of a fixed dimension in this example.
 
 In binary classification (our setting), we typically take the loss function to be the negative log likelihood
 \begin{equation}
 	\label{eqn:bce-loss}
 	\ell(\hat f(\mathbf z), y) = - y \log \hat f(\mathbf z) - (1 - y) \log (1 - \hat f(\mathbf z)).
 \end{equation}
-In the deep learning literature, this loss function is known as \emph{binary cross-entropy}.
+In the deep learning literature, this loss function is known as \emph{binary cross-entropy}. Minimizing this loss function gives a maximum likelihood estimate for the parameters.
 
 Unlike with ordinary least squares, there is unfortunately no nice closed-form solution for a neural network's parameters that minimizes this loss function. Even worse, this objective function is not necessarily convex, so we can't use off-the-shelf convex optimization techniques like with many other models that use maximum likelihood estimation \cite[\S 13.4]{PML}.
 Instead, neural network parameters are chosen by what is known as \emph{gradient descent}: we make initial (usually random) parameter assignments and gradually update them with tiny nudges---each of which decreases the total loss by a small amount.
@@ -287,7 +285,7 @@ Instead, neural network parameters are chosen by what is known as \emph{gradient
 			|(x)| \mathbf z & |(t1)| \times & |(p)| +         & |(s)| \sigma & |(t2)| \times & |(s2)| \sigma & |(l)| \ell & |(L)| \text{loss} \\
 		};
 
-		\draw[->] (x) -- (t1);
+		\draw[->] (x) edge["$\mathbf v_0$"] (t1);
 		\draw[->] (t1) edge["$\mathbf v_1$"] (p);
 		\draw[->] (p) edge["$\mathbf v_2$"] (s);
 		\draw[->] (s) edge["$\mathbf v_3$"] (t2);
@@ -300,7 +298,7 @@ Instead, neural network parameters are chosen by what is known as \emph{gradient
 		\draw[->] (C) -- (t2);
 		\draw[->] (y) -- (l);
 	\end{tikzpicture}
-	\caption{The computational graph for the multilayer perceptron $f(\mathbf z) = \sigma(C \sigma(A\mathbf z +\mathbf b))$. Each leaf represents an input to our computation, and each internal node represents an operation applied to its children. We compute the gradient of the loss function with respect to the models parameters by ``stepping backwards'' through this graph from $\ell$ to the parameter of interest.}
+	\caption{The computational graph for the multilayer perceptron $f(\mathbf z) = \sigma(C \sigma(A\mathbf z +\mathbf b))$. Each leaf represents an input to our computation, and each internal node represents an operation applied to its parents. We compute the gradient of the loss function with respect to the models parameters by ``stepping backwards'' through this graph from $\ell$ to the parameter of interest.}
 	\label{fig:mlp-computational-graph}
 \end{figure}
 
@@ -366,9 +364,9 @@ Multiplying the partial derivatives we just computed gives $\frac{\partial \ell}
 where $\gamma$ is some small constant called the \emph{learning rate}. We then repeat this process of computing gradients and updating parameters a large number of times.
 
 To determine when to stop iterating, we withhold a portion of our data from training (typically 20 percent) and after each iteration of gradient descent (called an epoch), we evaluate our model's performance on this validation set.
-If we reach a point in our training loss continues to decrease, but the validation performance stops improving we say that our model has \emph{overfit}, i.e., learned patterns that are in the training data by chance and are not indicative of a real relationship.
+If we reach a point in our gradient descent where our training loss continues to decrease, but the validation performance stops improving we say that our model has \emph{overfit}, i.e., learned patterns that are in the training data by chance and are not indicative of a real relationship.
 This is the point at which we terminate training \cite[\S 10.7.2]{ISL}, \cite[\S 13.5.1]{PML}.
 
 This was admittedly a toy example, and in practice, the process of computing gradients and updating parameter assignments is done automatically by a software library. There are many options, but we choose to use \texttt{pytorch} \cite{pytorch} for this project due to its modularity and its popularity in the research community. It's also common to use a more elaborate gradient descent technique than the one described here (we use Adam \cite{adam} to train our model) and to ``batch'' input in order to more efficiently utilize parallel computing during the training phase (we use a batch size of 500) \cite[\S 10.7.2]{ISL}.
 
-One of the miracles of machine learning is how well this backpropogation algorithm scales \cite[\S 13.2.6]{PML}. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters. Although in principle, loss functions are non convex and gradient descent may get stuck in local minima, this tends not to happen in practice. It's still not entirely understood why this is the case \cite[\S 13.4]{PML}.
+One of the miracles of machine learning is how well this backpropogation algorithm scales \cite[\S 13.2.6]{PML}. The same ideas described here were used to train GPT-4, a model with on the order of $1$ \emph{trillion} parameters \cite{gpt4}. Although in principle, loss functions are non convex and gradient descent may get stuck in local minima, this tends not to happen in practice. It's still not entirely understood why this is the case \cite[\S 13.4]{PML}.
